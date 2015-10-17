@@ -7,6 +7,6 @@ import core.types.HeartRate;
  */
 public interface HeartRateComputer {
 
-    public HeartRate compute(InputData inputData);
+    public HeartRate compute(InputDataVisitable inputDataVisitable);
 
 }

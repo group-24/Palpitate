@@ -1,6 +1,6 @@
 package ml.preprocessor;
 
-import ml.preprocessor.types.PreprocessedData;
+import ml.preprocessor.types.PreprocessedDataVisitable;
 
 /**
  * Created by mikeecb on 17/10/2015.
@@ -10,6 +10,6 @@ import ml.preprocessor.types.PreprocessedData;
  */
 public interface PreprocessedDataDAO {
 
-    public PreprocessedData getPreProcessedData();
+    public PreprocessedDataVisitable getPreProcessedData();
 
 }
