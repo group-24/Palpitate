@@ -18,10 +18,7 @@ for the purposes of unit tests is found in exampleData.
 
 DO NOT COMMIT LARGE FILES TO GIT
 
-Git commit rules:
+Git commit rules - http://chris.beams.io/posts/git-commit/
 
--1st line of max 70 characters - brief summary of the commit
--empty line
--(optional) Longer description of the aims this commit is trying to do
 
 Make the commit message comform to the sentance. If this commit is applied it will ...
