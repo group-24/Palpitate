@@ -2,7 +2,6 @@ package data;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Date;
 import java.util.Scanner;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -14,7 +13,7 @@ public class SubjectRawDataBuilder {
 
     private Integer id;
     private File closeMic;
-    private File BPMData;
+    private File bpmData;
 
     public SubjectRawDataBuilder withId(int id) {
         this.id = id;
@@ -26,23 +25,21 @@ public class SubjectRawDataBuilder {
         return this;
     }
 
-    public SubjectRawDataBuilder withBPMData(File BPMData) {
-        this.BPMData = BPMData;
+    public SubjectRawDataBuilder withBPMData(File bpmData) {
+        this.bpmData = bpmData;
         return this;
     }
 
     /**
-     * This methods finds closeMic file and BPMData files from the subject folder
+     * This methods finds closeMic file and bpmData files from the subject folder.
      * @param subjectDir
      * @return
      */
     public SubjectRawDataBuilder asBCMDir(File subjectDir) {
-        for(File f : subjectDir.listFiles()) {
-            System.out.println(f.getName());
-            if(f.getName().equals("BPM.txt")) {
-                BPMData = f;
-            }
-            else if(f.getName().endsWith("close.wav")) {
+        for (File f : subjectDir.listFiles()) {
+            if (f.getName().equals("BPM.txt")) {
+                bpmData = f;
+            } else if (f.getName().endsWith("close.wav")) {
                 closeMic = f;
             }
         }
@@ -50,13 +47,14 @@ public class SubjectRawDataBuilder {
         return this;
     }
 
-    private SortedMap<Double,Double> bpmDataParse(File f) throws FileNotFoundException {
+    static SortedMap<Double, Double> bpmDataParse(File f) throws FileNotFoundException {
         Scanner s = new Scanner(f);
         String[] line;
-        SortedMap<Double,Double> bpm = new TreeMap<Double,Double>();
-        while(s.hasNextLine()) {
+        SortedMap<Double, Double> bpm = new TreeMap<Double, Double>();
+        while (s.hasNextLine()) {
             line = s.nextLine().split("\t");
-            assert line[0].equals(line[1]): "the two times differ";
+            assert line.length == 3 : "invalid file";
+            assert line[0].equals(line[1]) : "the two times differ";
             bpm.put(Double.parseDouble(line[0]), Double.parseDouble(line[2]));
         }
 
@@ -64,11 +62,11 @@ public class SubjectRawDataBuilder {
     }
 
     public SubjectRawData build(){
-        if(id != null &&
+        if (id != null &&
            closeMic != null &&
-           BPMData != null) {
+           bpmData != null) {
             try {
-                return new SubjectRawData(id, bpmDataParse(BPMData),closeMic);
+                return new SubjectRawData(id, bpmDataParse(bpmData), closeMic);
             } catch (FileNotFoundException f) {
                 throw new RuntimeException("Invalid bpm file for subject " + id);
             }

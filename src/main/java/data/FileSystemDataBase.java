@@ -10,11 +10,11 @@ import java.util.regex.Pattern;
 /**
  * Created by Timotej on 21-Oct-15.
  */
-public class FileSystemDataBase {
+public class FileSystemDatabase {
     private final String rootPath;
     private final List<SubjectRawData> subjectData = new LinkedList<SubjectRawData>();
 
-    public FileSystemDataBase(String rootPath) {
+    public FileSystemDatabase(String rootPath) {
         this.rootPath = rootPath;
         populateSubjectData();
 
@@ -24,13 +24,13 @@ public class FileSystemDataBase {
         File[] files = new File(rootPath).listFiles();
         Pattern subjectPattern = Pattern.compile("Subject(\\d+)");
         Matcher matcher;
-        for(File f : files) {
+        for (File f : files) {
             matcher  = subjectPattern.matcher(f.getName());
-            if(matcher.matches()) {
+            if (matcher.matches()) {
                 subjectData.add(new SubjectRawDataBuilder()
-                                    .withId(Integer.parseInt(matcher.group(1)))
-                                    .asBCMDir(f)
-                                    .build());
+                        .withId(Integer.parseInt(matcher.group(1)))
+                        .asBCMDir(f)
+                        .build());
             }
         }
     }

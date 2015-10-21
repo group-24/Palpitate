@@ -11,7 +11,7 @@ public final class SubjectRawData {
     private final SortedMap<Double, Double> bpm;
     private final File audioFile;
 
-    SubjectRawData(int id, SortedMap<Double,Double> bpm, File audioFile) {
+    SubjectRawData(int id, SortedMap<Double, Double> bpm, File audioFile) {
         this.id = id;
         this.bpm = bpm;
         this.audioFile = audioFile;
@@ -21,7 +21,7 @@ public final class SubjectRawData {
         return id;
     }
 
-    public SortedMap<Double,Double> getBpm() {
+    public SortedMap<Double, Double> getBpm() {
         return bpm;
     }
 }
