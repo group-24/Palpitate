@@ -1,5 +1,7 @@
 package data;
 
+import ml.preprocessor.types.RawDataVisitable;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.LinkedList;
@@ -10,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Created by Timotej on 21-Oct-15.
  */
-public class FileSystemDatabase {
+public class FileSystemDatabase extends RawDataVisitable {
     private final String rootPath;
     private final List<SubjectRawData> subjectData = new LinkedList<SubjectRawData>();
 
