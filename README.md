@@ -10,4 +10,18 @@ Do not submit pull requests before running tests and running gradle check as the
 Code reviews/workflow - https://guides.github.com/introduction/flow/
 Ensure that you submit pull requests from a forked project and on a specific branch
 
-Travis CI docs - http://docs.travis-ci.com/ 
+Travis CI docs - http://docs.travis-ci.com/
+
+FileSystemDataBase can be used to get the BCM data. It relies on the following folder structure
+<path_passed_in>/Subject(\d+)/BPM.txt and <path_passed_in>/Subject(\d+)/.*close.wav . An example
+for the purposes of unit tests is found in exampleData.
+
+DO NOT COMMIT LARGE FILES TO GIT
+
+Git commit rules:
+
+-1st line of max 70 characters - brief summary of the commit
+-empty line
+-(optional) Longer description of the aims this commit is trying to do
+
+Make the commit message comform to the sentance. If this commit is applied it will ...
