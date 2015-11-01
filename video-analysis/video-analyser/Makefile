@@ -1,9 +1,8 @@
 # Paths
-OPENCV_PATH=../opencv-compiled/build
-FACETRACKER_PATH=../Facetracker
+OPENCV_PATH=../opencv-build
 
 # Programs
-cpp=
+CC=
 CXX=g++
 
 # Flags
@@ -11,17 +10,22 @@ ARCH_FLAGS=
 CFLAGS=-Wextra -Wall -pedantic-errors $(ARCH_FLAGS) -O3 -Wno-long-long
 LDFLAGS=$(ARCH_FLAGS)
 DEFINES=
-# INCLUDES=-I$(OPENCV_PATH)/include -Iinclude/
-INCLUDES=-I$(FACETRACKER_PATH)/include -Iinclude/
-# LIBRARIES=-L$(OPENCV_PATH)/lib -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_objdetect
-LIBRARIES=-L$(FACETRACKER_PATH)/src/lib -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_objdetect
+INCLUDES=-I$(OPENCV_PATH)/include -Iinclude/
+LIBRARIES=-L$(OPENCV_PATH)/lib -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_objdetect
 
 # Files which require compiling
 SOURCE_FILES=\
-	# src/main.cpp
+	src/lib/IO.cpp\
+	src/lib/PDM.cpp\
+	src/lib/Patch.cpp\
+	src/lib/CLM.cpp\
+	src/lib/FDet.cpp\
+	src/lib/PAW.cpp\
+	src/lib/FCheck.cpp\
+	src/lib/Tracker.cpp
 
 # Source files which contain a int main(..) function
-SOURCE_FILES_WITH_MAIN=src/exe/main.cpp
+SOURCE_FILES_WITH_MAIN=src/exe/face_tracker.cpp
 
 # End Configuration
 SOURCE_OBJECTS=$(patsubst %.cpp,%.o,$(SOURCE_FILES))
@@ -33,7 +37,7 @@ ALL_OBJECTS=\
 DEPENDENCY_FILES=\
 	$(patsubst %.o,%.d,$(ALL_OBJECTS))
 
-all: bin/video-analyser
+demo: bin/face_tracker
 
 %.o: %.cpp Makefile
 	@# Make dependecy file
@@ -43,7 +47,7 @@ all: bin/video-analyser
 
 -include $(DEPENDENCY_FILES)
 
-bin/video-analyser: $(ALL_OBJECTS)
+bin/face_tracker: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS)  -o $@ $(ALL_OBJECTS) $(LIBRARIES)
 
 .PHONY: clean
