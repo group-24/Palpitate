@@ -3,3 +3,12 @@
 build/*
 .gradle
 gradle/*
+
+# OpenCV build and source files
+video-analysis/opencv-build/*
+video-analysis/opencv-2.4.11/*
+video-analysis/opencv.zip
+
+# bin directories for libraries in video-analyser
+video-analysis/FaceTracker/bin/*
+video-analysis/video-analyser/bin/*
