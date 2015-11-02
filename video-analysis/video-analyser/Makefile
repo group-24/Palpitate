@@ -25,7 +25,7 @@ SOURCE_FILES=\
 	src/lib/FaceTracker/Tracker.cpp
 
 # Source files which contain a int main(..) function
-SOURCE_FILES_WITH_MAIN=src/exe/face_tracker.cpp
+SOURCE_FILES_WITH_MAIN=src/exe/video-analyser.cpp
 
 # End Configuration
 SOURCE_OBJECTS=$(patsubst %.cpp,%.o,$(SOURCE_FILES))
@@ -37,7 +37,7 @@ ALL_OBJECTS=\
 DEPENDENCY_FILES=\
 	$(patsubst %.o,%.d,$(ALL_OBJECTS))
 
-demo: bin/face_tracker
+demo: bin/video-analyser
 
 %.o: %.cpp Makefile
 	@# Make dependecy file
@@ -47,7 +47,7 @@ demo: bin/face_tracker
 
 -include $(DEPENDENCY_FILES)
 
-bin/face_tracker: $(ALL_OBJECTS)
+bin/video-analyser: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS)  -o $@ $(ALL_OBJECTS) $(LIBRARIES)
 
 .PHONY: clean
