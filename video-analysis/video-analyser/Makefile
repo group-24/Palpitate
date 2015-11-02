@@ -15,14 +15,14 @@ LIBRARIES=-L$(OPENCV_PATH)/lib -lopencv_core -lopencv_highgui -lopencv_imgproc -
 
 # Files which require compiling
 SOURCE_FILES=\
-	src/lib/IO.cpp\
-	src/lib/PDM.cpp\
-	src/lib/Patch.cpp\
-	src/lib/CLM.cpp\
-	src/lib/FDet.cpp\
-	src/lib/PAW.cpp\
-	src/lib/FCheck.cpp\
-	src/lib/Tracker.cpp
+	src/lib/FaceTracker/IO.cpp\
+	src/lib/FaceTracker/PDM.cpp\
+	src/lib/FaceTracker/Patch.cpp\
+	src/lib/FaceTracker/CLM.cpp\
+	src/lib/FaceTracker/FDet.cpp\
+	src/lib/FaceTracker/PAW.cpp\
+	src/lib/FaceTracker/FCheck.cpp\
+	src/lib/FaceTracker/Tracker.cpp
 
 # Source files which contain a int main(..) function
 SOURCE_FILES_WITH_MAIN=src/exe/face_tracker.cpp
