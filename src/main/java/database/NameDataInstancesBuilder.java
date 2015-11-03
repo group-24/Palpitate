@@ -19,23 +19,12 @@ public class NameDataInstancesBuilder implements DataInstancesBuilder<String, In
     public NameDataInstancesBuilder(DataInstancesBuilder<Integer, Integer, Integer> builder) {
         this.builder = builder;
     }
-
-    public NameDataInstancesBuilder forBatch(Integer batchID) {
-        builder.forBatch(batchID);
-        return this;
-    }
-
-    public NameDataInstancesBuilder forSubject(Integer subjectID) {
-        builder.forSubject(subjectID);
-        return this;
-    }
-
     public NameDataInstancesBuilder withFeature(String featureName) {
         features.add(featureName);
         return this;
     }
 
-    public Instances build(Connection conn) {
+    public DatabaseDataset<Instances> build(Connection conn) {
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT featureID, name FROM feature");
             ResultSet rs = stmt.executeQuery();

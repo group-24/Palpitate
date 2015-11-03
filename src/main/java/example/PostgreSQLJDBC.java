@@ -35,14 +35,13 @@ public class PostgreSQLJDBC {
         System.out.println( dib.withFeature(1).
                             withFeature(2).
                             withFeature(3).
-                            forBatch(1).
-                            build(c));
+                            build(c).getBatch(1, 0));
 
         NameDataInstancesBuilder ndib = new NameDataInstancesBuilder(new RawDataInstancesBuilder());
         System.out.println( ndib.withFeature("f1").
                 withFeature("f3").
-                forBatch(1).
-                build(c));
+                withFeature("BPM").
+                build(c).getBatch(1, 0));
 
         c.close();
 

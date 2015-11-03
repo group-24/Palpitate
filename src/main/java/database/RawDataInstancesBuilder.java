@@ -27,22 +27,6 @@ public class RawDataInstancesBuilder implements DataInstancesBuilder<Integer, In
             1 / RandomString.alphabetSize())) + 1);
 
     /**
-    REQUIRED tells which batch to use
-     */
-    public RawDataInstancesBuilder forBatch(Integer batchID) {
-        this.batchID = batchID;
-        return this;
-    }
-
-    /**
-    OPTIONAL, if used it just gets data for that subject
-     */
-    public RawDataInstancesBuilder forSubject(Integer subjectID) {
-        this.subjectID = subjectID;
-        return this;
-    }
-
-    /**
      REQUIRED tells which features to put into the dataset
      Call multiple times to add more features
      */
@@ -67,20 +51,20 @@ public class RawDataInstancesBuilder implements DataInstancesBuilder<Integer, In
      Therefore I conclude this is the best way of doing it. Only possible alternative
      I can think of is to use something like Big Table instead of Postgres.
      */
-    public Instances build(Connection connection) {
-        assert features.size() > 0 : "need atleast one feature";
+    public DatabaseInstancesFetcher build(Connection connection) {
+        if (features.size() == 0) {
+            throw new RuntimeException("builder needs atleast one feature");
+        }
         FastVector attributes = new FastVector(features.size() + 1);
         final Attribute subjectIdAttribute = new Attribute("subjectID");
         Map<Integer, Attribute> attributeMap = new HashMap<Integer, Attribute>();
-        Instances dataset;
         attributes.addElement(subjectIdAttribute);
         try {
             String fields = "";
             String joins = "";
             String ands = "";
-            String currentAlias;
-            boolean first = true;
-            Statement stmt = connection.createStatement();
+            String currentAlias = "";
+            String firstAllias = "";
 
             for (Map.Entry<Integer, String> feature : features.entrySet()) {
                 currentAlias = feature.getValue();
@@ -88,8 +72,8 @@ public class RawDataInstancesBuilder implements DataInstancesBuilder<Integer, In
                 attributes.addElement(a);
                 attributeMap.put(feature.getKey(), a);
 
-                if (first) {
-                    first = false;
+                if (firstAllias == "") {
+                    firstAllias = currentAlias;
                     fields += currentAlias + ".subjectID";
                     joins += " data as " + currentAlias;
                 } else {
@@ -101,40 +85,25 @@ public class RawDataInstancesBuilder implements DataInstancesBuilder<Integer, In
                 ands += " AND " + currentAlias + ".featureID = " +  feature.getKey();
 
             }
-            ResultSet rs = stmt.executeQuery("SELECT " + fields +
-                                             " FROM " + joins +
-                                             " WHERE " + ands.substring(4) + ";");
 
-
-            dataset =  resultSetToInstances(attributes, subjectIdAttribute, attributeMap, rs);
-            stmt.close();
+            return new DatabaseInstancesFetcher(connection.prepareStatement(
+                                    "SELECT " + fields +
+                                    " FROM " + joins +
+                                    " WHERE " + ands.substring(4) +
+                                    //selects the right batch
+                                    " AND " + firstAllias + ".batchID = ? AND " +
+                                    //enables us to select either a specific subject or all of them
+                                    "(" + firstAllias + ".subjectID = ? OR ?) AND " +
+                                    firstAllias + ".timeslice = ?"),
+                                    attributes,
+                                    subjectIdAttribute,
+                                    attributeMap,
+                                    features
+                                    );
 
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("SQL failed to fetch data");
         }
-        return dataset;
-    }
-
-    private Instances resultSetToInstances(FastVector attributes,
-                                           Attribute subjectIdAttribute,
-                                           Map<Integer, Attribute> attributeMap,
-                                           ResultSet rs) throws SQLException {
-        Instances dataset;
-        dataset = new Instances("data", attributes, 10);
-        Instance inst;
-        int numFeatures = attributes.size();
-        while (rs.next()) {
-            inst = new Instance(numFeatures);
-            inst.setValue(subjectIdAttribute, rs.getInt("subjectID"));
-            for (Map.Entry<Integer, String> feature : features.entrySet()) {
-                inst.setValue(attributeMap.get(feature.getKey()),
-                                                rs.getDouble(feature.getValue() + "fv"));
-            }
-
-            dataset.add(inst);
-
-        }
-        return dataset;
     }
 }

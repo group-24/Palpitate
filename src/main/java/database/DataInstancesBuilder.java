@@ -12,11 +12,6 @@ import java.sql.Statement;
  *  @param <T_feature> type of the feature selection input
  */
 public interface DataInstancesBuilder<T_feature, T_subject, T_batch> {
-    DataInstancesBuilder<T_feature, T_subject, T_batch> forBatch(T_batch batch);
-
-    DataInstancesBuilder<T_feature, T_subject, T_batch> forSubject(T_subject subject);
-
     DataInstancesBuilder<T_feature, T_subject, T_batch> withFeature(T_feature feature);
-
-    Instances build(Connection connection);
+    <T> DatabaseDataset<T> build(Connection connection);
 }

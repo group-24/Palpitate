@@ -17,7 +17,10 @@ CREATE TABLE data
   featureID int REFERENCES feature,
   batchID int REFERENCES batch,
   featureValue numeric not null,
-  PRIMARY KEY (subjectID, featureID, batchID)
+  timeslice int not null,
+  PRIMARY KEY (subjectID, featureID, batchID, timeslice)
 
 );
 
+-- makes sure BPM always be feature with id 1
+INSERT INTO feature(name) VALUES ('BPM') ;
