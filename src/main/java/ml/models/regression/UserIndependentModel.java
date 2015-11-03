@@ -24,7 +24,7 @@ public class UserIndependentModel {
     }
 
     public TrainingStatitistics train() throws Exception {
-        Instances dataset = dbDataset.getBatch(1,0);
+        Instances dataset = dbDataset.getBatch(1, 0);
 
         // Percent split
       /*  double percent = 0.80;

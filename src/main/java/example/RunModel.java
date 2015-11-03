@@ -22,7 +22,8 @@ public class RunModel {
          Connection c = DatabaseConnection.getDatabaseConnection();
          System.out.println("Opened database successfully");
 
-         NameDataInstancesBuilder ndib = new NameDataInstancesBuilder(new RawDataInstancesBuilder());
+         NameDataInstancesBuilder ndib = new NameDataInstancesBuilder(
+                                            new RawDataInstancesBuilder());
          DatabaseDataset<Instances> dataset = ndib.withFeature("f1").
                 withFeature("f3").
                 withFeature("BPM").
