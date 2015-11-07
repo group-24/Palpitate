@@ -23,14 +23,12 @@ def get_heartrates(pathToHeartAV, window=4):
 
         start_time_cell =  worksheet.columns[0][1]
         start_time_value = start_time_cell.value
-        # print('value of time: ' + str(start_time_value)),
 
         # time formats differ between worksheets
         if isinstance(start_time_value, float):
             start_time = get_tuple_for_time_from_exel(start_time_cell, 0)
         else:
             start_time = (start_time_value.hour, start_time_value.minute, start_time_value.second)
-        # print('value: ', start_time)
 
         number_seen = 0
         number_legal = 0
@@ -44,16 +42,17 @@ def get_heartrates(pathToHeartAV, window=4):
                 number_legal += 1
                 sum_heartrate += value
 
-            if number_seen == window and number_legal != 0:
-                mean_heartrate = sum_heartrate/number_legal
-                data.append(mean_heartrate)
+            if number_seen == window:
+                if number_legal != 0:
+                    mean_heartrate = sum_heartrate/number_legal
+                    data.append(mean_heartrate)
                 number_seen = 0
                 number_legal = 0
                 sum_heartrate = 0
 
-        # heartrates[get_subjectID_and_state(page)] = np.array(data)
+        print('data for ' + get_subjectID_and_state(page) + ", :\n" + str(len(data)) + ', LEN: ' + str(len(heartrate_column)))
         heartrates[get_subjectID_and_state(page)] = {
-            'heartrates': np.array(data),
+            'heartrates': np.array(data), #naming here is weird
             'start': start_time
             }
 
@@ -66,9 +65,9 @@ def get_subjectID_and_state(subjectID):
 
     return subjectID[index_to_trim_from:index_to_trim_from+5]
 
-
+# TODO: some helpers and this funciton assume window is 4 with magic numbers
 def get_interesting_heartrates(pathToHeartAV, window=4):
-    """Returns a dicitionary of <subjectID>_<state> -> [{time, bpm, description}],
+    """Returns a dicitionary of <subjectID>_<state> -> [[description, time, bpm]],
     where we only take moments from when a subject is talking
     (default window: 4)"""
 
@@ -93,18 +92,15 @@ def get_interesting_heartrates(pathToHeartAV, window=4):
         data_for_subject_state = []
         time_info_worksheet = time_info_workbooks[subject_state].sheet_by_index(0)
 
+        # data starts 2 rows down
         for rowidx in range(2, time_info_worksheet.nrows):
             row = time_info_worksheet.row(rowidx)
             activity = row[1].value
             # check to see if it qualifies as a period where the subject speaks
             if activity in moments:
-                print('getting data for: ' + activity + ' in ' + subject_state)
                 start_time = get_tuple_for_time_from_exel(row[5], 0)
-                # HACK: this really is
-                end_time = get_end_time_for(time_info_worksheet, rowidx)
-                # end_time = get_tuple_for_time_from_exel(time_info_worksheet.row(rowidx+1)[5], 0)
-
-                data_for_subject_state.append(get_info_for(subject_state, start_time, end_time, activity, heartrate_timings))
+                end_time = get_tuple_for_time_from_exel(get_end_time_for(time_info_worksheet, rowidx), 0)
+                data_for_subject_state += get_info_for(subject_state, start_time, end_time, activity, heartrate_timings)
 
         heartrate_data[subject_state] = np.array(data_for_subject_state)
 
@@ -112,21 +108,47 @@ def get_interesting_heartrates(pathToHeartAV, window=4):
 
 def get_end_time_for(worksheet, rowidx):
     i = 0
-    while(True):
+    while True :
         i += 1
-        if not (worksheet.cell_type(rowidx, 5) in (xlrd.XL_CELL_EMPTY, xlrd.XL_CELL_BLANK)):
-            # print('found row at ' + str(i))
+        if worksheet.cell_type(rowidx + i, 5) == xlrd.XL_CELL_DATE:
             return worksheet.row(rowidx + i)[5]
 
 
 def get_info_for(subject_state, start_time, end_time, activity, heartrate_timings):
     """Returns a list containing all of the heartrate quanta for a particular moment"""
-    # print('SUCESS!! start time:' + str(start_time))
+    info_for_session = heartrate_timings[subject_state]
+    start_time_for_session = info_for_session['start']
+    heartrates = info_for_session['heartrates']
 
+    seconds_after = seconds_differece(start_time_for_session, start_time)
+    period_of_moment = seconds_differece(start_time, end_time)
 
+    total_heartrate = 0
+    data = []
+    number_in_batch = 0
+    for i in range(period_of_moment):
+        if seconds_after + i >= len(heartrates):
+            break
+        number_in_batch += 1
+        total_heartrate += heartrates[seconds_after + i]
+        if number_in_batch == 4:
+            mean_heartrate = total_heartrate / 4
+            # HACK: this represents: activity, start_time, heartrate
+            data.append([activity, seconds_after + i - 4, mean_heartrate])
+            number_in_batch = 0
+            total_heartrate = 0
+
+    return data
 
 
 # from: http://stackoverflow.com/questions/17140652/read-time-from-excel-sheet-using-xlrd-in-time-format-and-not-in-float
 def get_tuple_for_time_from_exel(cell_with_excel_time, wb):
     """Returns a (hour, minute, second) of the time from the excel spreadsheet"""
     return xlrd.xldate_as_tuple(cell_with_excel_time.value, wb)[3:]
+
+
+def seconds_differece(start, end):
+    hours_diff = end[0] - start[0]
+    minutes_diff = end[1] - start[1]
+    seconds_diff = end[2] - start[2]
+    return seconds_diff + (60 * minutes_diff) + (3600 * hours_diff)
