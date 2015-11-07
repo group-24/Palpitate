@@ -9,7 +9,7 @@ from interesting_moments import moments
 import os
 
 def get_heartrates(pathToHeartAV, window=4):
-    """Returns a dicitionary of <subjectID>_<state> -> heartrates, each entry in the
+    """Returns a dicitionary of <subjectID>_<state> -> {[heartrates], start_time}, each entry in the
     heratrates array for that subject is the mean heartrate for that time window
     (default window: 4)"""
 
@@ -20,6 +20,17 @@ def get_heartrates(pathToHeartAV, window=4):
         worksheet = workbook[page]
         heartrate_column = worksheet.columns[1] # the B column contains the data we want
         heartrate_column = heartrate_column [1:] # trim the top level
+
+        start_time_cell =  worksheet.columns[0][1]
+        start_time_value = start_time_cell.value
+        # print('value of time: ' + str(start_time_value)),
+
+        # time formats differ between worksheets
+        if isinstance(start_time_value, float):
+            start_time = get_tuple_for_time_from_exel(start_time_cell, 0)
+        else:
+            start_time = (start_time_value.hour, start_time_value.minute, start_time_value.second)
+        # print('value: ', start_time)
 
         number_seen = 0
         number_legal = 0
@@ -40,7 +51,11 @@ def get_heartrates(pathToHeartAV, window=4):
                 number_legal = 0
                 sum_heartrate = 0
 
-        heartrates[get_subjectID_and_state(page)] = np.array(data)
+        # heartrates[get_subjectID_and_state(page)] = np.array(data)
+        heartrates[get_subjectID_and_state(page)] = {
+            'heartrates': np.array(data),
+            'start': start_time
+            }
 
     return heartrates
 
@@ -107,7 +122,7 @@ def get_end_time_for(worksheet, rowidx):
 def get_info_for(subject_state, start_time, end_time, activity, heartrate_timings):
     """Returns a list containing all of the heartrate quanta for a particular moment"""
     # print('SUCESS!! start time:' + str(start_time))
-    
+
 
 
 
