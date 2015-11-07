@@ -15,7 +15,7 @@ def get_heartrates(pathToHeartAV, window=4):
 
     workbook = load_workbook(pathToHeartAV + 'SensorData/HeartAV_HeartRateFiles/HeartRate.xlsx')
 
-    heartrates = {}
+    heartrate_info = {}
     for page in workbook.get_sheet_names():
         worksheet = workbook[page]
         heartrate_column = worksheet.columns[1] # the B column contains the data we want
@@ -50,13 +50,12 @@ def get_heartrates(pathToHeartAV, window=4):
                 number_legal = 0
                 sum_heartrate = 0
 
-        print('data for ' + get_subjectID_and_state(page) + ", :\n" + str(len(data)) + ', LEN: ' + str(len(heartrate_column)))
-        heartrates[get_subjectID_and_state(page)] = {
+        heartrate_info[get_subjectID_and_state(page)] = {
             'heartrates': np.array(data), #naming here is weird
             'start': start_time
             }
 
-    return heartrates
+    return heartrate_info
 
 def get_subjectID_and_state(subjectID):
     index_to_trim_from = 3
@@ -65,7 +64,6 @@ def get_subjectID_and_state(subjectID):
 
     return subjectID[index_to_trim_from:index_to_trim_from+5]
 
-# TODO: some helpers and this funciton assume window is 4 with magic numbers
 def get_interesting_heartrates(pathToHeartAV, window=4):
     """Returns a dicitionary of <subjectID>_<state> -> [[description, time, bpm]],
     where we only take moments from when a subject is talking
@@ -100,13 +98,14 @@ def get_interesting_heartrates(pathToHeartAV, window=4):
             if activity in moments:
                 start_time = get_tuple_for_time_from_exel(row[5], 0)
                 end_time = get_tuple_for_time_from_exel(get_end_time_for(time_info_worksheet, rowidx), 0)
-                data_for_subject_state += get_info_for(subject_state, start_time, end_time, activity, heartrate_timings)
+                data_for_subject_state += get_info_for(subject_state, start_time, end_time, activity, heartrate_timings, window)
 
         heartrate_data[subject_state] = np.array(data_for_subject_state)
 
     return heartrate_data
 
 def get_end_time_for(worksheet, rowidx):
+    """gets the end time of the activity at rowidx of the worksheet"""
     i = 0
     while True :
         i += 1
@@ -114,8 +113,8 @@ def get_end_time_for(worksheet, rowidx):
             return worksheet.row(rowidx + i)[5]
 
 
-def get_info_for(subject_state, start_time, end_time, activity, heartrate_timings):
-    """Returns a list containing all of the heartrate quanta for a particular moment"""
+def get_info_for(subject_state, start_time, end_time, activity, heartrate_timings, window):
+    """Returns a list containing all of the heartrate quanta for a particular activity"""
     info_for_session = heartrate_timings[subject_state]
     start_time_for_session = info_for_session['start']
     heartrates = info_for_session['heartrates']
@@ -131,10 +130,10 @@ def get_info_for(subject_state, start_time, end_time, activity, heartrate_timing
             break
         number_in_batch += 1
         total_heartrate += heartrates[seconds_after + i]
-        if number_in_batch == 4:
-            mean_heartrate = total_heartrate / 4
+        if number_in_batch == window:
+            mean_heartrate = total_heartrate / window
             # HACK: this represents: activity, start_time, heartrate
-            data.append([activity, seconds_after + i - 4, mean_heartrate])
+            data.append([activity, seconds_after + i - window, mean_heartrate])
             number_in_batch = 0
             total_heartrate = 0
 
