@@ -7,13 +7,28 @@ import xlrd
 import numpy as np
 from interesting_moments import moments
 import os
+import pickle
+
+XLS_CACHE = 'xlsCache'
+def check_cache(cache_file):
+	with open(cache_file,'rb') as f:
+		data = pickle.load(f)
+		return data
+def write_cache(cache_file, data):
+	with open(cache_file,'wb') as f:
+		pickle.dump(data, f)
+
 
 def get_heartrates(pathToHeartAV, window=4):
-    """Returns a dicitionary of <subjectID>_<state> -> {[heartrates], start_time}, each entry in the
+    """Returns a dicitionary of <subjectID>_<state> -> (start_time, [heartrates]), each entry in the
     heratrates array for that subject is the mean heartrate for that time window
     (default window: 4)"""
 
-    workbook = load_workbook(pathToHeartAV + 'SensorData/HeartAV_HeartRateFiles/HeartRate.xlsx')
+    try:
+        return check_cache(XLS_CACHE)
+    except FileNotFoundError:
+        pass
+    workbook = load_workbook(os.path.join(pathToHeartAV, 'SensorData', 'HeartAV_HeartRateFiles', 'HeartRate.xlsx'))
 
     heartrate_info = {}
     for page in workbook.get_sheet_names():
@@ -38,7 +53,7 @@ def get_heartrates(pathToHeartAV, window=4):
             value = heartrate.value
             number_seen += 1
 
-            if isinstance(value, (float, long, int)) and value != 0:
+            if isinstance(value, (float, int, int)) and value != 0:
                 number_legal += 1
                 sum_heartrate += value
 
@@ -50,11 +65,8 @@ def get_heartrates(pathToHeartAV, window=4):
                 number_legal = 0
                 sum_heartrate = 0
 
-        heartrate_info[get_subjectID_and_state(page)] = {
-            'heartrates': np.array(data), #naming here is weird
-            'start': start_time
-            }
-
+        heartrate_info[str(get_subjectID_and_state(page))] = (start_time , np.array(data))
+    write_cache(XLS_CACHE, heartrate_info)
     return heartrate_info
 
 def get_subjectID_and_state(subjectID):
