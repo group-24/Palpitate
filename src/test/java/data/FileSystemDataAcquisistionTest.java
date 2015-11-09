@@ -4,7 +4,6 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Assert;
 import org.junit.Test;
-import sun.security.krb5.internal.crypto.Des;
 
 import java.io.File;
 import java.io.FileNotFoundException;
