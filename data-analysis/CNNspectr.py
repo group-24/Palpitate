@@ -1,7 +1,7 @@
 from spectrogram import bpm_to_data
 from get_heartrates import get_interesting_heartrates
 from convertToWav import VIDEO_ROOT
-from keras.models import Sequential  
+from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
@@ -17,40 +17,71 @@ import code
 
 lowest_bpm = min(min(y_train) , min(y_test))
 highest_bpm = max(max(y_train) , max(y_test))
-nb_classes = highest_bpm - lowest_bpm + 1
-nb_filters = 32
-nb_conv = 3 
-nb_pool = 2
+scale = 10
+nb_classes = (highest_bpm - lowest_bpm + 1*scale) // scale
 
 
 
-
-y_train = list(map(lambda x : x - lowest_bpm, y_train))
-y_test = list(map(lambda x : x - lowest_bpm, y_test))
+print(highest_bpm, lowest_bpm, nb_classes)
+y_train = list(map(lambda x : (x - lowest_bpm)//scale, y_train))
+y_test = list(map(lambda x : (x - lowest_bpm) //scale, y_test))
 # convert class vectors to binary class matrices
 # converts a number to unary so 4 is 0001
 Y_train = np_utils.to_categorical(y_train, nb_classes)
 Y_test = np_utils.to_categorical(y_test, nb_classes)
 
 print(X_train[0].shape)
+
+nb_filters = 7
+nb_pool = 2
+nb_rows = 3
+nb_coloumns = 3
+
 model = Sequential()
-model.add(Convolution2D(nb_filters, 3,3, input_shape=(X_train[0].shape)))
-model.add(Activation('sigmoid'))
-model.add(Convolution2D(nb_filters, 3,3))
+
+model.add(Convolution2D(nb_filters,2,7, input_shape=(X_train[0].shape)))
 model.add(Activation('relu'))
+
+model.add(MaxPooling2D(pool_size=(1, nb_pool), ignore_border=False))
+
+model.add(Convolution2D(nb_filters,5,5))
+model.add(Activation('relu'))
+
 model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
-model.add(Dropout(0.25))
+
+model.add(Convolution2D(nb_filters*2, nb_rows,nb_coloumns))
+model.add(Activation('relu'))
+
+model.add(Convolution2D(nb_filters*2, nb_rows,nb_coloumns))
+model.add(Activation('relu'))
+
+model.add(MaxPooling2D(pool_size=(1, nb_pool)))
+model.add(Dropout(0.2))
+
+model.add(Convolution2D(nb_filters*4, nb_rows*2,nb_coloumns))
+model.add(Activation('relu'))
+
+model.add(Convolution2D(nb_filters*4, nb_rows*2,nb_coloumns))
+model.add(Activation('relu'))
+
+model.add(Convolution2D(nb_filters*4, nb_rows*2,nb_coloumns))
+model.add(Activation('relu'))
+
+model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
+model.add(Dropout(0.2))
+
+
 
 model.add(Flatten())
-model.add(Dense(512))
-model.add(Activation('tanh'))
-model.add(Dropout(0.5))
+model.add(Dense(350))
+model.add(Activation('relu'))
+model.add(Dropout(0.1))
 model.add(Dense(nb_classes))
 model.add(Activation('softmax'))
 
-model.compile(loss='categorical_crossentropy', optimizer='adadelta')
+model.compile(loss='binary_crossentropy', optimizer='adadelta')
 
-model.fit(X_train, Y_train, batch_size=50, nb_epoch=5, show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
+model.fit(X_train, Y_train, batch_size=400, nb_epoch=5, show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
 score = model.evaluate(X_test, Y_test, show_accuracy=True, verbose=0)
 print('Test score:', score[0])
 print('Test accuracy:', score[1])
