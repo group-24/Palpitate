@@ -7,13 +7,24 @@ import xlrd
 import numpy as np
 from interesting_moments import moments
 import os
+import pickle
+
+XLS_CACHE = 'xlsCache'
+def check_cache(cache_file):
+	with open(cache_file,'rb') as f:
+		data = pickle.load(f)
+		return data
+def write_cache(cache_file, data):
+	with open(cache_file,'wb') as f:
+		pickle.dump(data, f)
+
 
 def get_heartrates(pathToHeartAV, window=4):
     """Returns a dicitionary of <subjectID>_<state> -> {[heartrates], start_time}, each entry in the
     heratrates array for that subject is the mean heartrate for that time window
     (default window: 4)"""
 
-    workbook = load_workbook(pathToHeartAV + 'SensorData/HeartAV_HeartRateFiles/HeartRate.xlsx')
+    workbook = load_workbook(os.path.join(pathToHeartAV, 'SensorData', 'HeartAV_HeartRateFiles', 'HeartRate.xlsx'))
 
     heartrate_info = {}
     for page in workbook.get_sheet_names():
@@ -38,7 +49,7 @@ def get_heartrates(pathToHeartAV, window=4):
             value = heartrate.value
             number_seen += 1
 
-            if isinstance(value, (float, long, int)) and value != 0:
+            if isinstance(value, (float, int, int)) and value != 0:
                 number_legal += 1
                 sum_heartrate += value
 
@@ -49,7 +60,7 @@ def get_heartrates(pathToHeartAV, window=4):
                 number_seen = 0
                 number_legal = 0
                 sum_heartrate = 0
-
+	   
         heartrate_info[get_subjectID_and_state(page)] = {
             'heartrates': np.array(data), #naming here is weird
             'start': start_time
@@ -68,12 +79,16 @@ def get_interesting_heartrates(pathToHeartAV, window=4):
     """Returns a dicitionary of <subjectID>_<state> -> [[description, time, bpm]],
     where we only take moments from when a subject is talking
     (default window: 4)"""
+    try:
+        return check_cache(XLS_CACHE)
+    except FileNotFoundError:
+        pass
 
     # SETUP: opening all of the files
     heartrate_timings = get_heartrates(pathToHeartAV, 1);
 
     time_info_workbooks = {}
-    path_to_logs = pathToHeartAV + 'MetaData/HeartAV_HCITaskLogfiles'
+    path_to_logs = os.path.join(pathToHeartAV,'MetaData','HeartAV_HCITaskLogfiles')
     for workbook_name in os.listdir(path_to_logs):
         workbook = load_xls(path_to_logs + '/' + workbook_name)
         subject_label = workbook_name[1:6]
@@ -102,6 +117,7 @@ def get_interesting_heartrates(pathToHeartAV, window=4):
 
         heartrate_data[subject_state] = np.array(data_for_subject_state)
 
+    write_cache(XLS_CACHE, heartrate_data)
     return heartrate_data
 
 def get_end_time_for(worksheet, rowidx):
