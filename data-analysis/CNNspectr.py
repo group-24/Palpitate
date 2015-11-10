@@ -17,7 +17,7 @@ import code
 
 lowest_bpm = min(min(y_train) , min(y_test))
 highest_bpm = max(max(y_train) , max(y_test))
-scale = 10
+scale = 1
 nb_classes = (highest_bpm - lowest_bpm + 1*scale) // scale
 
 
@@ -32,17 +32,17 @@ Y_test = np_utils.to_categorical(y_test, nb_classes)
 
 print(X_train[0].shape)
 
-nb_filters = 7
+nb_filters = 8
 nb_pool = 2
-nb_rows = 3
-nb_coloumns = 3
+nb_rows = 4
+nb_coloumns = 4
 
 model = Sequential()
 
-model.add(Convolution2D(nb_filters,2,7, input_shape=(X_train[0].shape)))
+model.add(Convolution2D(nb_filters,4,4, input_shape=(X_train[0].shape)))
 model.add(Activation('relu'))
 
-model.add(MaxPooling2D(pool_size=(1, nb_pool), ignore_border=False))
+model.add(MaxPooling2D(pool_size=(nb_pool*2, nb_pool)))
 
 model.add(Convolution2D(nb_filters,5,5))
 model.add(Activation('relu'))
@@ -52,36 +52,20 @@ model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
 model.add(Convolution2D(nb_filters*2, nb_rows,nb_coloumns))
 model.add(Activation('relu'))
 
-model.add(Convolution2D(nb_filters*2, nb_rows,nb_coloumns))
-model.add(Activation('relu'))
-
-model.add(MaxPooling2D(pool_size=(1, nb_pool)))
-model.add(Dropout(0.2))
-
-model.add(Convolution2D(nb_filters*4, nb_rows*2,nb_coloumns))
-model.add(Activation('relu'))
-
-model.add(Convolution2D(nb_filters*4, nb_rows*2,nb_coloumns))
-model.add(Activation('relu'))
-
-model.add(Convolution2D(nb_filters*4, nb_rows*2,nb_coloumns))
-model.add(Activation('relu'))
-
 model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
 model.add(Dropout(0.2))
 
 
-
 model.add(Flatten())
-model.add(Dense(350))
+model.add(Dense(150))
 model.add(Activation('relu'))
-model.add(Dropout(0.1))
+model.add(Dropout(0.5))
 model.add(Dense(nb_classes))
 model.add(Activation('softmax'))
 
 model.compile(loss='binary_crossentropy', optimizer='adadelta')
 
-model.fit(X_train, Y_train, batch_size=400, nb_epoch=5, show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
+model.fit(X_train, Y_train, batch_size=50, nb_epoch=30, show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
 score = model.evaluate(X_test, Y_test, show_accuracy=True, verbose=0)
 print('Test score:', score[0])
 print('Test accuracy:', score[1])

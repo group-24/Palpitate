@@ -16,21 +16,31 @@ class SubjectWav:
     def __init__(self, wav_file):
         self.wav_file = wav_file
         self.sample_rate = None
-        self.freqency_resolution = 2000 #uknown measure of frequency resolution, higher number, larger resolution
     def __load_data__(self):
         if self.sample_rate is None:
             fs, frames = wavfile.read(self.wav_file)
             self.sample_rate = fs
             self.audio_data = frames
-    def get_spectrogram(self, at_second, for_seconds=4,channel=0):
+    def get_spectrogram(self, at_second, for_seconds=4,channel=0, window_length=0.2, max_freqency=4000):
+        """
+            Gets the spectrogram for the file. With window_length in seconds and
+            0-max_freqency Hz range. The shorter the window_length the smaller
+            freqency resolution
+        """
         self.__load_data__()
         at_second = int(at_second)
+        fs = max_freqency * 2
+        nfft = int(fs*window_length)
+        noverlap = nfft/ 2
+
         window_start = at_second * self.sample_rate
         window_size = for_seconds * self.sample_rate
 #       code.interact(local=locals())
         f, t, Sxx = signal.spectrogram(self.audio_data[window_start:window_start + window_size,channel],
-                      self.sample_rate,
-                      nperseg = self.freqency_resolution,
+                      fs,
+                      nperseg = nfft, #self.freqency_resolution,
+                      noverlap = noverlap,
+                      nfft = nfft
                       )
                 #to decibel
         return f, t, 20.*np.log10(np.abs(Sxx)/10e-6)
@@ -39,7 +49,7 @@ class SubjectWav:
 
 def plotSubjectWav(sw, at_second,for_seconds=4):
     f, t, Sxx = sw.get_spectrogram(at_second,for_seconds)
-    plt.pcolormesh(t, f[0:300], Sxx[0:300])
+    plt.pcolormesh(t, f, Sxx)
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
     plt.show()
@@ -65,7 +75,7 @@ def bpm_to_data(data, train_split=0.9):
     X_test = []
     Y_test = []
     prevElem = None
-    limit = 250
+   # limit = 250
     for wavFile in iterateThroughWav():
         m = pattern.match(wavFile)
         subjectId = int(m.group(1))
@@ -74,12 +84,15 @@ def bpm_to_data(data, train_split=0.9):
         subjectStateId = str(subjectId) + "_" + str(stateId).zfill(2)
         try:
             for _,timestamp,bpm in data[subjectStateId]:
+                #reduces the memory used
+                if random.uniform(0,1) < 0.9:
+                    continue
                 timestamp = int(timestamp)
                 bpm = round(float(bpm))
                 _,_,Sxx0 = sw.get_spectrogram(timestamp,4,0)
                 _,_,Sxx1 = sw.get_spectrogram(timestamp,4,1)
-                #print(Sxx0.shape) (651,154)
-                elem = np.array([Sxx0[0:limit],Sxx1[0:limit]])
+               # print(Sxx0.shape) #(651,154) (801,219)
+                elem = np.array([Sxx0,Sxx1])
                 if prevElem is not None and elem.shape != prevElem.shape:
                     print("skipping " + str(wavFile) + " " + subjectStateId +
                             " due to incorrect shape")
