@@ -1,5 +1,6 @@
 import convertToWav
 import numpy as np
+import tables as tb
 import os
 from scipy.io import wavfile
 from scipy import signal
@@ -10,6 +11,7 @@ import pylab
 import re
 import random
 import code
+import errno
 
 
 class SubjectWav:
@@ -66,16 +68,21 @@ def iterateThroughWav():
 SPECTROGRAM_CACHE = "spectrogramCache.dat"
 def bpm_to_data(data, train_split=0.9):
     try:
-        return check_cache(SPECTROGRAM_CACHE)
-    except FileNotFoundError:
+        return readh5File()
+    except IOError:
         pass
     pattern = re.compile(".*vp_(\\d+)_(\\d+)_.*")
-    X_train = []
-    Y_train = []
-    X_test = []
-    Y_test = []
     prevElem = None
    # limit = 250
+    h5file = tb.openFile('spectrograms.h5', mode='w', title="All the data")
+    root = h5file.root
+    first = True
+    X_train = None
+    Y_train = None
+    X_test = None
+    Y_test = None
+
+
     for wavFile in iterateThroughWav():
         m = pattern.match(wavFile)
         subjectId = int(m.group(1))
@@ -85,8 +92,8 @@ def bpm_to_data(data, train_split=0.9):
         try:
             for _,timestamp,bpm in data[subjectStateId]:
                 #reduces the memory used
-                if random.uniform(0,1) < 0.9:
-                    continue
+             #   if random.uniform(0,1) < 0.9:
+             #       continue
                 timestamp = int(timestamp)
                 bpm = round(float(bpm))
                 _,_,Sxx0 = sw.get_spectrogram(timestamp,4,0)
@@ -98,22 +105,46 @@ def bpm_to_data(data, train_split=0.9):
                             " due to incorrect shape")
                     continue
                 prevElem = elem
+                #store the elem to disk
+                if first:
+                    first = False
+                    a = tb.Atom.from_dtype(np.dtype('Float32'))
+                    data_shape = tuple([0] + list(elem.shape))
+                    X_train = h5file.create_earray(root,'X_train',a,data_shape ,"X_train")
+                    X_test = h5file.create_earray(root,'X_test',a, data_shape,"X_test")
+                    Y_train = h5file.create_earray(root,'Y_train',tb.IntAtom(), (0,),"Y_train")
+               #     code.interact(local=locals())
+                    Y_test = h5file.create_earray(root,'Y_test',tb.IntAtom(), (0,),"Y_test")
                 if random.uniform(0,1) < 0.9:
-                    X_train.append(elem)
-                    Y_train.append(bpm)
+                    X_train.append(np.array([elem]))
+                    Y_train.append([bpm])
                 else:
-                    X_test.append(elem)
-                    Y_test.append(bpm)
+                    X_test.append(np.array([elem]))
+                    Y_test.append([bpm])
+            h5file.flush()
         except KeyError:
             print("can not find: " + subjectStateId + ".")
             pass
         print("converted " + str(wavFile))
     #Could not broadcast error means that not all elemnt of X_train have the same shape
     #usually meaning there is something wrong with files
-    data = (np.array(X_train), np.array(Y_train)) , (np.array(X_test), np.array(Y_test))
-    write_cache(SPECTROGRAM_CACHE,data)
-    return data
+    h5file.close()
+#    data = (X_train, Y_train) , (X_test, Y_test)
+#    write_cache(SPECTROGRAM_CACHE,data)
+    return readh5File()
 
+
+def readh5File():
+    h5file = tb.openFile('spectrograms.h5', mode='r', title="All the data")
+    return ((h5file.root.X_train , h5file.root.Y_train),
+            (h5file.root.X_test, h5file.root.Y_test))
+
+def make_sure_path_exists(path):
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
 
 
 if __name__ == "__main__":
@@ -122,4 +153,11 @@ if __name__ == "__main__":
         sw = SubjectWav(p)
     plotSubjectWav(sw, 31*60+17)
 
-
+# make_sure_path_exists("dat")
+#                filename = os.path.join("dat", subjectStateId + "_" + str(timestamp))
+#                memmap_elem = np.memmap(filename,dtype='float32',mode='w+', shape=(elem.shape))
+#                memmap_elem[:] = elem[:]
+#                del memmap_elem #flushes to disk
+#                #make a ro version of it that goes into the list
+#                ro_elem = np.memmap(filename,dtype='float32',mode='r', shape=elem.shape)
+#
