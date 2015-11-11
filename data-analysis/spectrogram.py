@@ -5,6 +5,7 @@ import os
 from scipy.io import wavfile
 from scipy import signal
 from get_heartrates import check_cache, write_cache
+from keras.utils.io_utils import HDF5Matrix
 
 import matplotlib.pyplot as plt
 import pylab
@@ -12,7 +13,6 @@ import re
 import random
 import code
 import errno
-
 
 class SubjectWav:
     def __init__(self, wav_file):
@@ -82,7 +82,6 @@ def bpm_to_data(data, train_split=0.9):
     X_test = None
     Y_test = None
 
-
     for wavFile in iterateThroughWav():
         m = pattern.match(wavFile)
         subjectId = int(m.group(1))
@@ -132,7 +131,11 @@ def bpm_to_data(data, train_split=0.9):
 #    data = (X_train, Y_train) , (X_test, Y_test)
 #    write_cache(SPECTROGRAM_CACHE,data)
     return readh5File()
-
+def appendToDatasetAt(dataset,idx, obj):
+    if not dataset.shape[0] < idx:
+        dataset.resize(idx + 1000,axis=0)
+        print("resizing")
+    dataset[0] = obj
 
 def readh5File():
     h5file = tb.openFile('spectrograms.h5', mode='r', title="All the data")
