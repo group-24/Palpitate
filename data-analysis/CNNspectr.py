@@ -44,7 +44,7 @@ nb_coloumns = 5
 
 model = Sequential()
 
-model.add(Convolution2D(nb_filters,nb_rows,nb_coloumns, input_shape=(X_train[0].shape)))
+model.add(Convolution2D(nb_filters,20,nb_coloumns, input_shape=(X_train[0].shape)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(nb_pool*2, nb_pool)))
 
@@ -52,9 +52,6 @@ model.add(Convolution2D(nb_filters,nb_rows,nb_coloumns))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(nb_pool*2, nb_pool)))
 model.add(Dropout(0.1))
-
-model.add(Convolution2D(nb_filters*2, nb_rows,nb_coloumns))
-model.add(Activation('relu'))
 
 model.add(Convolution2D(nb_filters*2, nb_rows,nb_coloumns))
 model.add(Activation('relu'))
@@ -115,6 +112,7 @@ class CacheBatcher:
             self.n_cached += 1
             self.cache[(start,end)] = b
         return b
+
 cacheBatcher = CacheBatcher(X_train, Y_train, batch_size)
 
 print("Training on " + str(train_size) + " examples")

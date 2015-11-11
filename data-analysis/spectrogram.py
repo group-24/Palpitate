@@ -13,6 +13,9 @@ import re
 import random
 import code
 import errno
+import subprocess as sp
+
+FFMPEG_BIN = "ffmpeg.exe"
 
 class SubjectWav:
     def __init__(self, wav_file):
@@ -22,8 +25,9 @@ class SubjectWav:
         if self.sample_rate is None:
             fs, frames = wavfile.read(self.wav_file)
             self.sample_rate = fs
-            self.audio_data = frames
-    def get_spectrogram(self, at_second, for_seconds=4,channel=0, window_length=0.2, max_freqency=4000):
+            #to mono
+            self.audio_data = np.average(frames, axis=1)
+    def get_spectrogram(self, at_second, for_seconds=4, window_length=0.05, max_freqency=4000):
         """
             Gets the spectrogram for the file. With window_length in seconds and
             0-max_freqency Hz range. The shorter the window_length the smaller
@@ -31,25 +35,41 @@ class SubjectWav:
         """
         self.__load_data__()
         at_second = int(at_second)
-        fs = max_freqency * 2
+        fs = self.sample_rate #max_freqency * 2
         nfft = int(fs*window_length)
         noverlap = nfft/ 2
-
         window_start = at_second * self.sample_rate
         window_size = for_seconds * self.sample_rate
 #       code.interact(local=locals())
-        f, t, Sxx = signal.spectrogram(self.audio_data[window_start:window_start + window_size,channel],
+        f, t, Sxx = signal.spectrogram(self.audio_data[window_start:window_start + window_size],
                       fs,
                       nperseg = nfft, #self.freqency_resolution,
                       noverlap = noverlap,
                       nfft = nfft
                       )
                 #to decibel
-        return f, t, 20.*np.log10(np.abs(Sxx)/10e-6)
+        max_freq_idx = int((max_freqency / f[-1]) * Sxx.shape[0])
+        return f[0:max_freq_idx], t, 20.*np.log10(np.abs(Sxx[0:max_freq_idx])/10e-6)
 
 
+class SubjectVideo(SubjectWav):
+    def __init__(self, avi_file):
+        self.avi_file = avi_file
+        self.sample_rate = None
+    def __load_data__(self):
+        if self.sample_rate is None:
+            self.sample_rate = 44100
+            command = [ FFMPEG_BIN,
+                    '-i', self.avi_file,
+                    '-ab', '160k',
+                    '-ar', str(self.sample_rate), # ouput will have 44100 Hz
+                    '-ac', '1', # stereo (set to '1' for mono)
+                    '-f', 'wav',
+                    '-']
+            pipe = sp.Popen(command, stdout=sp.PIPE, bufsize=10**8)
+            self.audio_data = np.fromstring(pipe.stdout.read(),dtype="int16")
 
-def plotSubjectWav(sw, at_second,for_seconds=4):
+def plotSubjectWav(sw, at_second,for_seconds=4,):
     f, t, Sxx = sw.get_spectrogram(at_second,for_seconds)
     plt.pcolormesh(t, f, Sxx)
     plt.ylabel('Frequency [Hz]')
@@ -95,10 +115,9 @@ def bpm_to_data(data, train_split=0.9):
              #       continue
                 timestamp = int(timestamp)
                 bpm = round(float(bpm))
-                _,_,Sxx0 = sw.get_spectrogram(timestamp,4,0)
-                _,_,Sxx1 = sw.get_spectrogram(timestamp,4,1)
+                _,_,Sxx0 = sw.get_spectrogram(timestamp,4)
                # print(Sxx0.shape) #(651,154) (801,219)
-                elem = np.array([Sxx0,Sxx1])
+                elem = np.array([Sxx0])
                 if prevElem is not None and elem.shape != prevElem.shape:
                     print("skipping " + str(wavFile) + " " + subjectStateId +
                             " due to incorrect shape")
@@ -153,7 +172,9 @@ def make_sure_path_exists(path):
 if __name__ == "__main__":
     sw = None
     for p in iterateThroughWav():
-        sw = SubjectWav(p)
+        v = p.replace(".wav",".avi")
+        print(v)
+        sw = SubjectVideo(v)
     plotSubjectWav(sw, 31*60+17)
 
 # make_sure_path_exists("dat")
