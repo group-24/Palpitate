@@ -1,4 +1,4 @@
-from spectrogram import bpm_to_data
+from spectrogram import full_bpm_to_data, HEART_AV_ROOT
 from get_heartrates import get_interesting_heartrates
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, Flatten
@@ -8,17 +8,25 @@ from scipy.stats import pearsonr
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 from sklearn.cross_validation import train_test_split
+from kbhit import KBHit
 
 import numpy as np
 import code
 import itertools
 
-(X_train, y_train), (X_test, y_test) = bpm_to_data(get_interesting_heartrates("C:\\Uni\\HeartAV"))
+kb = KBHit()
+(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-Y_train = np.array(y_train)
-Y_test = np.array(y_test)
-X_train = np.array(X_train)
-X_test = np.array(X_test)
+#so it fits into memory without paging
+reduce_to = int(X_train.shape[0] * 0.7)
+X_train = X_train[:reduce_to]
+y_train = y_train[:reduce_to]
+
+#Y_train = np.array(y_train)
+#Y_test = np.array(y_test)
+Y_test = y_test
+#X_train = np.array(X_train)
+#X_test = np.array(X_test)
 
 
 print(X_train.shape)
@@ -50,7 +58,7 @@ def get_model_and_score( X_train, Y_train,
     model.add(Dense(1))
     model.add(Activation('linear'))
 
-    model.compile(loss='mse', optimizer='adadelta')
+    model.compile(loss='mse', optimizer='adam')
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=2)
     history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=10,
@@ -77,9 +85,21 @@ nb_hiddens = [(5-i)*50 for i in range(2,4)]
 print("Model: nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb_pools, nb_rows, nb_columns")
 
 
-X_train, X_validate, Y_train, Y_validate = train_test_split(X_train, Y_train, test_size=0.25, random_state=4)
+#X_train, X_validate, Y_train, Y_validate = train_test_split(X_train, Y_train, test_size=0.25, random_state=4)
+
+split_at = X_train.shape[0] // 4
+
+X_validate = np.array(X_train[:split_at])
+Y_validate = np.array(y_train[:split_at])
+print(split_at)
+
+X_train = np.array(X_train[split_at:])
+Y_train = np.array(y_train[split_at:])
+
+
 prevLoss = 223942309
 maxModel = None
+stop = False
 for args in itertools.product(nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb_pools, nb_rows, nb_columns):
     print("Model: ", args)
     hist , model = get_model_and_score(X_train, Y_train, *args)
@@ -90,9 +110,18 @@ for args in itertools.product(nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb
     if rmse < prevLoss:
         prevLoss =  rmse
         maxModel = model
+    while kb.kbhit():
+        if "q" in kb.getch():
+            print("quiting due to user pressing q")
+            stop = True
 
+    if stop:
+        break
 
+del X_train
 
+X_test = np.array(X_test)
+Y_test = np.array(Y_test)
 
 r, rmse, _ = assess_model(maxModel, X_test, Y_test)
 print("Model r: ", r)
