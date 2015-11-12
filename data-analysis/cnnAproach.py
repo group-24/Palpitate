@@ -28,7 +28,6 @@ Y_test = y_test
 #X_train = np.array(X_train)
 #X_test = np.array(X_test)
 
-
 print(X_train.shape)
 
 def get_model_and_score( X_train, Y_train,
@@ -36,19 +35,24 @@ def get_model_and_score( X_train, Y_train,
               nb_filter=10, nb_pool=2, nb_rows = 2, nb_coloumns = 2):
     model = Sequential()
 
+    row_num = X_train.shape[2]
     model.add(Convolution2D(nb_filter,nb_rows,nb_coloumns, input_shape=(X_train[0].shape)))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(nb_pool*2, nb_pool)))
+    model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool), ignore_border=False))
+    #1D convolutions
 
-    model.add(Convolution2D(nb_filter,nb_rows // (nb_pool*2),nb_coloumns))
+    row_num = (row_num // nb_rows) // nb_pool
+    nb_rows1 = max(1,   min(nb_rows, row_num))
+    model.add(Convolution2D(nb_filter*4,nb_rows1,nb_coloumns))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(nb_pool*2, nb_pool)))
+    model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool), ignore_border=False))
     model.add(Dropout(drop1))
 
-    model.add(Convolution2D(nb_filter*2, nb_rows // (nb_pool*2),nb_coloumns))
+    row_num = (row_num // nb_rows1) // nb_pool
+    nb_rows1 = max(1,   min(nb_rows, row_num))
+    model.add(Convolution2D(nb_filter*8, nb_rows1,nb_coloumns))
     model.add(Activation('relu'))
-
-    model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
+    model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool), ignore_border=False))
     model.add(Dropout(drop2))
 
     model.add(Flatten())
@@ -61,8 +65,8 @@ def get_model_and_score( X_train, Y_train,
     model.compile(loss='mse', optimizer='adam')
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=10,
-            verbose=1, validation_split=0.01, callbacks=[early_stopping])
+    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=20,
+            verbose=1, validation_split=0.1, callbacks=[early_stopping])
 
     return history, model
 
@@ -73,14 +77,14 @@ def assess_model(model, X_test, Y_test):
     return r, rmse, predictions
 
 
-nb_pools = [1,2]
-nb_rows = [X_train.shape[2] // 16, 4]
-nb_columns = [2, 8]
-nb_filters = [5,10]
-drop1s = [0,0.1]
-drop2s = [0,0.1]
-drop3s = [0,0.5]
-nb_hiddens = [(5-i)*50 for i in range(2,4)]
+nb_pools = [3,2]
+nb_rows = [X_train.shape[2]] #if set to lower numbers seems to masivelly overfit
+nb_columns = [3,6]
+nb_filters = [64,32]
+drop1s = [0.1, 0.5]
+drop2s = [0.1]
+drop3s = [0.5]
+nb_hiddens = [200,300]
 
 print("Model: nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb_pools, nb_rows, nb_columns")
 
@@ -96,7 +100,6 @@ print(split_at)
 X_train = np.array(X_train[split_at:])
 Y_train = np.array(y_train[split_at:])
 
-
 prevLoss = 223942309
 maxModel = None
 stop = False
@@ -111,9 +114,12 @@ for args in itertools.product(nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb
         prevLoss =  rmse
         maxModel = model
     while kb.kbhit():
-        if "q" in kb.getch():
-            print("quiting due to user pressing q")
-            stop = True
+        try:
+            if "q" in kb.getch():
+                print("quiting due to user pressing q")
+                stop = True
+        except UnicodeDecodeError:
+            pass
 
     if stop:
         break
@@ -123,7 +129,7 @@ del X_train
 X_test = np.array(X_test)
 Y_test = np.array(Y_test)
 
-r, rmse, _ = assess_model(maxModel, X_test, Y_test)
+r, rmse, preds = assess_model(maxModel, X_test, Y_test)
 print("Model r: ", r)
 print("Model rmse: ", rmse)
-#code.interact(local=locals())
+code.interact(local=locals())
