@@ -17,6 +17,12 @@ import itertools
 kb = KBHit()
 (X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
+MAX_BPM = 250
+def normalize_bpm(bpm):
+    return bpm / MAX_BPM
+def unnormalize_bpm(bpm):
+    return bpm * MAX_BPM
+
 #so it fits into memory without paging
 reduce_to = int(X_train.shape[0] * 0.7)
 X_train = X_train[:reduce_to]
@@ -65,7 +71,7 @@ def get_model_and_score( X_train, Y_train,
     model.compile(loss='mse', optimizer='adam')
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=20,
+    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=15,
             verbose=1, validation_split=0.1, callbacks=[early_stopping])
 
     return history, model
@@ -76,13 +82,18 @@ def assess_model(model, X_test, Y_test):
     rmse = sqrt(mean_squared_error(predictions, Y_test))
     return r, rmse, predictions
 
+def shuffle_in_unison_scary(a, b):
+    rng_state = np.random.get_state()
+    np.random.shuffle(a)
+    np.random.set_state(rng_state)
+    np.random.shuffle(b)
 
-nb_pools = [3,2]
+nb_pools = [2]
 nb_rows = [X_train.shape[2]] #if set to lower numbers seems to masivelly overfit
 nb_columns = [3,6]
-nb_filters = [64,32]
-drop1s = [0.1, 0.5]
-drop2s = [0.1]
+nb_filters = [32,16,64]
+drop1s = [0.5]
+drop2s = [0.5]
 drop3s = [0.5]
 nb_hiddens = [200,300]
 
@@ -94,11 +105,12 @@ print("Model: nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb_pools, nb_rows,
 split_at = X_train.shape[0] // 4
 
 X_validate = np.array(X_train[:split_at])
-Y_validate = np.array(y_train[:split_at])
+Y_validate = np.array(list(map(normalize_bpm, y_train[:split_at])))
 print(split_at)
 
+Y_train = np.array(list(map(normalize_bpm, y_train[split_at:])))
 X_train = np.array(X_train[split_at:])
-Y_train = np.array(y_train[split_at:])
+shuffle_in_unison_scary(X_train, Y_train)
 
 prevLoss = 223942309
 maxModel = None
@@ -110,8 +122,8 @@ for args in itertools.product(nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb
     r, rmse, _ = assess_model(model, X_validate, Y_validate)
     print("Model r: ", r)
     print("Model rmse: ", rmse)
-    if rmse < prevLoss:
-        prevLoss =  rmse
+    if r[0] < prevLoss:
+        prevLoss =  r[0]
         maxModel = model
     while kb.kbhit():
         try:
@@ -127,9 +139,10 @@ for args in itertools.product(nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb
 del X_train
 
 X_test = np.array(X_test)
-Y_test = np.array(Y_test)
+Y_test_norm = np.array(list(map(normalize_bpm, Y_test)))
 
-r, rmse, preds = assess_model(maxModel, X_test, Y_test)
+r, rmse, preds = assess_model(maxModel, X_test, Y_test_norm)
+predicted_bpm = np.array(list(map(unnormalize_bpm, preds)))
 print("Model r: ", r)
 print("Model rmse: ", rmse)
 code.interact(local=locals())
