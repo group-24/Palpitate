@@ -16,7 +16,7 @@ def check_cache(cache_file):
 		return data
 def write_cache(cache_file, data):
 	with open(cache_file,'wb') as f:
-		pickle.dump(data, f)
+		pickle.dump(data, f, protocol=4)
 
 
 def get_heartrates(pathToHeartAV, window=4):
@@ -60,7 +60,7 @@ def get_heartrates(pathToHeartAV, window=4):
                 number_seen = 0
                 number_legal = 0
                 sum_heartrate = 0
-	   
+
         heartrate_info[get_subjectID_and_state(page)] = {
             'heartrates': np.array(data), #naming here is weird
             'start': start_time
