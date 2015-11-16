@@ -16,7 +16,7 @@ def check_cache(cache_file):
 		return data
 def write_cache(cache_file, data):
 	with open(cache_file,'wb') as f:
-		pickle.dump(data, f)
+		pickle.dump(data, f, protocol=4)
 
 
 def get_heartrates(pathToHeartAV, window=4):
