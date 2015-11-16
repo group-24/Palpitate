@@ -298,6 +298,13 @@ class NormalizedSpectrograms:
     def unnormalize_bpm(self, bpm):
         return (bpm * self.__y_sd) + self.__y_mean
 
+    def __getMeanAndSd(self, X, y):
+        if(self.__mean is None):
+            self.__mean = np.average(X,0)
+            self.__sd = np.std(X, 0)
+            self.__y_mean = np.average(y)
+            self.__y_sd = np.std(y)
+
     def getTrainAndValidationData(self, validation_split=7):
         (X_train, y_train) = readH5FileTrain(self.__h5file__)
 
@@ -306,15 +313,12 @@ class NormalizedSpectrograms:
         X_train = X_train[:reduce_to]
         y_train = y_train[:reduce_to]
 
+        self.__getMeanAndSd(X_train, y_train)
         #normalize spectrograms
-        self.__mean = np.average(X_train,0)
-        self.__sd = np.std(X_train, 0)
         X_train = np.subtract(X_train, self.__mean)
         X_train = np.divide(X_train, self.__sd)
 
         #normalize bpms
-        self.__y_mean = np.average(y_train)
-        self.__y_sd = np.std(y_train)
         print(self.__y_mean,self.__y_sd)
 
         split_at = X_train.shape[0] // validation_split
@@ -330,6 +334,7 @@ class NormalizedSpectrograms:
 
     def getTestData(self):
         (X_test, y_test) = readH5FileTest(self.__h5file__)
+        self.__getMeanAndSd(X_test, y_test)
 
         X_test = np.subtract(X_test, self.__mean)
         X_test = np.divide(X_test, self.__sd)

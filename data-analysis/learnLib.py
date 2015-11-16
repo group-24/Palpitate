@@ -1,6 +1,7 @@
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
+from keras.layers.recurrent import LSTM
 from keras.callbacks import EarlyStopping
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
@@ -51,3 +52,38 @@ def shuffle_in_unison(a, b):
     np.random.shuffle(a)
     np.random.set_state(rng_state)
     np.random.shuffle(b)
+
+class RandomRnnParameters():
+    def __init__(self):
+        self.__cnt = 0
+    def __iter__(self):
+        return self
+    def __next__(self):
+        self.__cnt += 1
+        if self.__cnt > 100:
+            raise StopIteration
+        return random.randrange(100,1000,100), \
+                random.randrange(50,200,50), \
+                random.uniform(0.2,0.8) \
+                random.uniform(0.2,0.8)
+
+
+def get_RNN_model(in_shape, ltsm_out_dim = 256,nb_hidden=100, drop1=0.5, drop2=0.5):
+    model = Sequential()
+
+    model.add(LSTM(ltsm_out_dim, input_shape=in_shape))
+    model.add(Activation('relu'))
+    model.add(Dropout(drop1))
+
+    model.add(Flatten())
+    model.add(Dense(nb_hidden))
+    model.add(Activation('relu'))
+    model.add(Dropout(drop2))
+
+    model.add(Dense(1))
+    model.add(Activation('linear'))
+
+    model.compile(loss='mse', optimizer='adam')
+    return model
+
+

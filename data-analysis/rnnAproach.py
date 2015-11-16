@@ -13,10 +13,21 @@ kb = KBHit()
 
 ns = NormalizedSpectrograms()
 
-(X_train, Y_train) , valTuple = ns.getTrainAndValidationData()
+def sliceToTimeSeries(X):
+    divisibleTime = X[:,0,:,:150]
+    slicedTime = np.reshape(divisibleTime, (-1, X.shape[2], 30, 5))
+    swappedAxes = np.swapaxes(slicedTime, 1, 2)
+    flattenLastTwo = np.reshape(swappedAxes,(X.shape[0],30 , -1))
+    return flattenLastTwo
 
+
+(X_train, Y_train) , (X_val, Y_val) = ns.getTrainAndValidationData()
+
+#slice the spectrogram
+X_train = sliceToTimeSeries(X_train)
 print(X_train.shape)
-
+#Y_train = np.repeat(np.reshape(-1,1), X_train.shape[1], axis=1)
+print(Y_train.shape)
 
 print("Model: nb_hiddens, drop1s")
 
@@ -25,17 +36,18 @@ prevLoss =  34534645735673
 maxModel = None
 stop = False
 models = {}
-X_validate, Y_validate = valTuple
-for args in learnLib.RandomMlpParameters(): #itertools.product(nb_hiddens, drop1s):
+X_val = sliceToTimeSeries(X_val)
+
+for args in [1]:#learnLib.RandomMlpParameters(): #itertools.product(nb_hiddens, drop1s):
     print("Model: ", args)
-    model = learnLib.get_2_layer_MLP_model(X_train[0].shape, *args)
+    model = learnLib.get_RNN_model(X_train[0].shape)
     early_stopping = EarlyStopping(monitor='val_loss', patience=2)
     history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=10,
-            verbose=1, validation_data=valTuple, callbacks=[early_stopping])
+            verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
 
 
     # most recent loss hist.history["loss"][-1]
-    r, rmse, _ = learnLib.assess_model(model, X_validate, Y_validate)
+    r, rmse, _ = learnLib.assess_model(model, X_val, Y_val)
     models[args]  = r,rmse
     print("Model r: ", r)
     print("Model rmse: ", rmse)
@@ -56,6 +68,7 @@ for args in learnLib.RandomMlpParameters(): #itertools.product(nb_hiddens, drop1
 del X_train
 
 X_test, Y_test = ns.getTestData()
+X_test = sliceToTimeSeries(X_test)
 
 learnLib.printModels(models)
 
