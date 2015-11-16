@@ -38,6 +38,8 @@ def get_heartrates(pathToHeartAV, window=4):
         # time formats differ between worksheets
         if isinstance(start_time_value, float):
             start_time = get_tuple_for_time_from_exel(start_time_cell, 0)
+        elif isinstance(start_time_value, str):
+            start_time = (start_time_value[0:2], start_time_value[2:5], start_time_value[5:8])
         else:
             start_time = (start_time_value.hour, start_time_value.minute, start_time_value.second)
 
@@ -60,7 +62,7 @@ def get_heartrates(pathToHeartAV, window=4):
                 number_seen = 0
                 number_legal = 0
                 sum_heartrate = 0
-	   
+
         heartrate_info[get_subjectID_and_state(page)] = {
             'heartrates': np.array(data), #naming here is weird
             'start': start_time
