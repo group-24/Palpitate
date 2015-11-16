@@ -13,6 +13,7 @@ import random
 import code
 import errno
 import subprocess as sp
+import learnLib
 
 """
 Change this according to your local settings
@@ -269,8 +270,82 @@ def appendToDatasetAt(dataset,idx, obj):
 
 def readh5File(h5file):
     h5file = tb.openFile(h5file, mode='r', title="All the data")
-    return ((h5file.root.X_train , h5file.root.Y_train),
-            (h5file.root.X_test, h5file.root.Y_test))
+    return  readH5FileTrain(h5file), readH5FileTest(h5file)
+
+
+def readH5FileTrain(h5file):
+    return h5file.root.X_train , h5file.root.Y_train
+
+def readH5FileTest(h5file):
+    return h5file.root.X_test , h5file.root.Y_test
+
+class NormalizedSpectrograms:
+    __trainSizeReduction = 0.75
+    def __init__(self):
+        try:
+            self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_CACHE, mode='r')
+        except IOError:
+            #todo, needs to regenerate the cache
+            pass
+        self.__mean = None
+        self.__sd = None
+        self.__y_mean = None
+        self.__y_sd = None
+
+    def normalize_bpm(self, bpm):
+        return (bpm - self.__y_mean) / self.__y_sd
+
+    def unnormalize_bpm(self, bpm):
+        return (bpm * self.__y_sd) + self.__y_mean
+
+    def getTrainAndValidationData(self, validation_split=7):
+        (X_train, y_train) = readH5FileTrain(self.__h5file__)
+
+        #so it fits into memory without paging
+        reduce_to = int(X_train.shape[0] * NormalizedSpectrograms.__trainSizeReduction)
+        X_train = X_train[:reduce_to]
+        y_train = y_train[:reduce_to]
+
+        #normalize spectrograms
+        self.__mean = np.average(X_train,0)
+        self.__sd = np.std(X_train, 0)
+        X_train = np.subtract(X_train, self.__mean)
+        X_train = np.divide(X_train, self.__sd)
+
+        #normalize bpms
+        self.__y_mean = np.average(y_train)
+        self.__y_sd = np.std(y_train)
+        print(self.__y_mean,self.__y_sd)
+
+        split_at = X_train.shape[0] // validation_split
+
+        X_validate = X_train[:split_at]
+        Y_validate = np.array(list(map(self.normalize_bpm, y_train[:split_at])))
+
+        Y_train = np.array(list(map(self.normalize_bpm, y_train[split_at:])))
+        X_train = (X_train[split_at:])
+        learnLib.shuffle_in_unison(X_train, Y_train)
+
+        return (X_train, Y_train), (X_validate, Y_validate)
+
+    def getTestData(self):
+        (X_test, y_test) = readH5FileTest(self.__h5file__)
+
+        X_test = np.subtract(X_test, self.__mean)
+        X_test = np.divide(X_test, self.__sd)
+
+        Y_test = np.array(list(map(self.normalize_bpm, y_test)))
+
+        return X_test, Y_test
+
+
+
+
+
+
+
+
+
 
 def make_sure_path_exists(path):
     try:
