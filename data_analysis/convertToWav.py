@@ -1,8 +1,6 @@
 import os
 import subprocess
 
-
-
 VIDEO_ROOT = "C:\\Uni\\HeartAV\\SensorData\\HeartAV_VideoFiles"
 if __name__ == "__main__":
 	for avi in os.listdir(VIDEO_ROOT):

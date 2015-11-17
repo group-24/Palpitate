@@ -22,6 +22,9 @@ run rm -rf /build_keras.sh
 run apt-get install -y -q libblas-dev liblapack-dev libatlas-base-dev gfortran
 run /usr/bin/yes | pip install --upgrade scipy
 
+run pip install tables
+run pip install sklearn
+
 WORKDIR /home
 
 EXPOSE 5000

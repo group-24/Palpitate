@@ -52,5 +52,4 @@ moments = [
     'traffic',
     'tv',
     'vomit',
-
 ]

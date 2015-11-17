@@ -48,7 +48,7 @@ class SubjectWav:
         noverlap = nfft/ 2
         window_start = at_second * self.sample_rate
         window_size = for_seconds * self.sample_rate
-#       code.interact(local=locals())
+        # code.interact(local=locals())
         f, t, Sxx = signal.spectrogram(self.audio_data[window_start:window_start + window_size],
                       fs,
                       nperseg = nfft, #self.freqency_resolution,
@@ -138,8 +138,6 @@ arguemnts:
     train_split = split between train and test data
 """
 def full_bpm_to_data(data, train_split=0.9):
-    import tables as tb
-
     try:
         return readh5File(FULL_SPECTROGRAM_CACHE)
     except IOError:
@@ -345,14 +343,6 @@ class NormalizedSpectrograms:
         Y_test = np.array(list(map(self.normalize_bpm, y_test)))
 
         return X_test, Y_test
-
-
-
-
-
-
-
-
 
 
 def make_sure_path_exists(path):

@@ -8,16 +8,16 @@ from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 
-
-
 import random
 import numpy as np
 
 class RandomMlpParameters():
     def __init__(self):
         self.__cnt = 0
+
     def __iter__(self):
         return self
+
     def __next__(self):
         self.__cnt += 1
         if self.__cnt > 100:
@@ -58,8 +58,10 @@ def shuffle_in_unison(a, b):
 class RandomRnnParameters():
     def __init__(self):
         self.__cnt = 0
+
     def __iter__(self):
         return self
+
     def __next__(self):
         self.__cnt += 1
         if self.__cnt > 100:
@@ -91,5 +93,3 @@ def get_RNN_model(in_shape, ltsm_out_dim = 256,nb_hidden=100, drop1=0.5, drop2=0
 
     model.compile(loss='mse', optimizer='rmsprop')
     return model
-
-
