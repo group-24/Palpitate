@@ -41,9 +41,8 @@ X_val = sliceToTimeSeries(X_val)
 for args in learnLib.RandomRnnParameters(): #itertools.product(nb_hiddens, drop1s):
     print("Model: ", args)
     model = learnLib.get_RNN_model(X_train[0].shape, *args)
-    early_stopping = EarlyStopping(monitor='loss', patience=3)
-    #early_stopping = EarlyStopping(monitor='val_loss', patience=3)
-    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=8,
+    early_stopping = EarlyStopping(monitor='val_loss', patience=2)
+    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=20,
             verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
 
 

@@ -321,6 +321,9 @@ class NormalizedSpectrograms:
         #normalize bpms
         print(self.__y_mean,self.__y_sd)
 
+        #shuffle everything
+        learnLib.shuffle_in_unison(X_train, Y_train)
+
         split_at = X_train.shape[0] // validation_split
 
         X_validate = X_train[:split_at]
@@ -328,7 +331,6 @@ class NormalizedSpectrograms:
 
         Y_train = np.array(list(map(self.normalize_bpm, y_train[split_at:])))
         X_train = (X_train[split_at:])
-        learnLib.shuffle_in_unison(X_train, Y_train)
 
         return (X_train, Y_train), (X_validate, Y_validate)
 
