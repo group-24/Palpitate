@@ -1,33 +1,27 @@
-from ubuntu:latest
+from ffmpeg-docker-image
 
-run echo "Building Palpitate docker image" 
-
-run apt-get update
-run apt-get install -y -q wget curl
-run apt-get install -y -q build-essential
-run apt-get install -y -q cmake
-run apt-get install -y -q python2.7 python2.7-dev
-run wget 'https://pypi.python.org/packages/2.7/s/setuptools/setuptools-0.6c11-py2.7.egg' && /bin/sh setuptools-0.6c11-py2.7.egg && rm -f setuptools-0.6c11-py2.7.egg
-
-# insall pip
-run apt-get install -y -q python-setuptools python-dev build-essential 
-run easy_install pip 
-run pip install --upgrade pip
-
-# install numpy for OpenCV
-run pip install numpy
-run apt-get install -y -q libavformat-dev libavcodec-dev libavfilter-dev libswscale-dev
-run apt-get install -y -q libjpeg-dev libpng-dev libtiff-dev libjasper-dev zlib1g-dev libopenexr-dev libxine-dev libeigen3-dev libtbb-dev
+run echo "Building Palpitate docker image"
 
 # install flask for server
 run pip install flask
 
-# install git
-run apt-get install -y -q git
+run apt-get install -y -q libhdf5-serial-dev
 
-# run build_opencv.sh script in container
-add build_opencv.sh /build_opencv.sh
-run /bin/sh /build_opencv.sh
-run rm -rf /build_opencv.sh
+run pip install openpyxl
+run pip install xlrd
+run pip install h5py
+
+# Install Keras
+run apt-get install -y -q python-numpy python-scipy
+run apt-get install --upgrade python-scipy
+run apt-get install -y -q libhdf5-serial-dev
+add build_keras.sh /build_keras.sh
+run /bin/sh /build_keras.sh
+run rm -rf /build_keras.sh
+
+run apt-get install -y -q libblas-dev liblapack-dev libatlas-base-dev gfortran
+run /usr/bin/yes | pip install --upgrade scipy
+
+WORKDIR /home
 
 EXPOSE 5000
