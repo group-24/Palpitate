@@ -322,7 +322,7 @@ class NormalizedSpectrograms:
         print(self.__y_mean,self.__y_sd)
 
         #shuffle everything
-        learnLib.shuffle_in_unison(X_train, Y_train)
+        learnLib.shuffle_in_unison(X_train, y_train)
 
         split_at = X_train.shape[0] // validation_split
 
