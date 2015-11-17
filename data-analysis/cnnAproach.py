@@ -17,16 +17,21 @@ import itertools
 kb = KBHit()
 (X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-MAX_BPM = 250
-def normalize_bpm(bpm):
-    return bpm / MAX_BPM
-def unnormalize_bpm(bpm):
-    return bpm * MAX_BPM
-
 #so it fits into memory without paging
 reduce_to = int(X_train.shape[0] * 0.7)
 X_train = X_train[:reduce_to]
 y_train = y_train[:reduce_to]
+
+mean = np.mean(y_train)
+sd = np.std(y_train)
+print(mean,sd)
+#do this
+def normalize_bpm(bpm):
+    return (bpm - mean) / sd
+
+def unnormalize_bpm(bpm):
+    return (bpm  * sd) + mean
+
 
 #Y_train = np.array(y_train)
 #Y_test = np.array(y_test)
@@ -65,13 +70,17 @@ def get_model_and_score( X_train, Y_train,
     model.add(Dense(nb_hidden))
     model.add(Activation('relu'))
     model.add(Dropout(drop3))
+
+    model.add(Dense(nb_hidden // 2))
+    model.add(Activation('relu'))
+    model.add(Dropout(drop3))
     model.add(Dense(1))
     model.add(Activation('linear'))
 
     model.compile(loss='mse', optimizer='adam')
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=15,
+    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=1,
             verbose=1, validation_split=0.1, callbacks=[early_stopping])
 
     return history, model
@@ -88,14 +97,14 @@ def shuffle_in_unison_scary(a, b):
     np.random.set_state(rng_state)
     np.random.shuffle(b)
 
-nb_pools = [2]
+nb_pools = [1]
 nb_rows = [X_train.shape[2]] #if set to lower numbers seems to masivelly overfit
 nb_columns = [3,6]
-nb_filters = [32,16,64]
-drop1s = [0.5]
-drop2s = [0.5]
+nb_filters = [32, 64]
+drop1s = [0.1]
+drop2s = [0.1]
 drop3s = [0.5]
-nb_hiddens = [200,300]
+nb_hiddens = [400,300]
 
 print("Model: nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb_pools, nb_rows, nb_columns")
 
@@ -110,9 +119,9 @@ print(split_at)
 
 Y_train = np.array(list(map(normalize_bpm, y_train[split_at:])))
 X_train = np.array(X_train[split_at:])
-shuffle_in_unison_scary(X_train, Y_train)
+#shuffle_in_unison_scary(X_train, Y_train)
 
-prevLoss = 223942309
+prevLoss =  0.0
 maxModel = None
 stop = False
 for args in itertools.product(nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb_pools, nb_rows, nb_columns):
@@ -122,8 +131,8 @@ for args in itertools.product(nb_hiddens, drop1s, drop2s, drop3s, nb_filters, nb
     r, rmse, _ = assess_model(model, X_validate, Y_validate)
     print("Model r: ", r)
     print("Model rmse: ", rmse)
-    if r[0] < prevLoss:
-        prevLoss =  r[0]
+    if abs(r[0]) > prevLoss:
+        prevLoss =  abs(r[0])
         maxModel = model
     while kb.kbhit():
         try:
