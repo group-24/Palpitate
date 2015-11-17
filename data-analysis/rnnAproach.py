@@ -29,7 +29,7 @@ print(X_train.shape)
 #Y_train = np.repeat(np.reshape(-1,1), X_train.shape[1], axis=1)
 print(Y_train.shape)
 
-print("Model: nb_hiddens, drop1s")
+print("Model: lstm outdim, nb_hiddens, drop1, drop2")
 
 
 prevLoss =  34534645735673
@@ -38,11 +38,12 @@ stop = False
 models = {}
 X_val = sliceToTimeSeries(X_val)
 
-for args in [1]:#learnLib.RandomMlpParameters(): #itertools.product(nb_hiddens, drop1s):
+for args in learnLib.RandomRnnParameters(): #itertools.product(nb_hiddens, drop1s):
     print("Model: ", args)
-    model = learnLib.get_RNN_model(X_train[0].shape)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=10,
+    model = learnLib.get_RNN_model(X_train[0].shape, *args)
+    early_stopping = EarlyStopping(monitor='loss', patience=3)
+    #early_stopping = EarlyStopping(monitor='val_loss', patience=3)
+    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=8,
             verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
 
 
