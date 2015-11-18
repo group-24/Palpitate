@@ -3,8 +3,10 @@
 build/*
 .gradle
 gradle/*
+
 xlsCache
 spectrogramCache.dat
 __pycache__
 *.py~
 *.h5
+*.pyc
