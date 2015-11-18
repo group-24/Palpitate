@@ -279,7 +279,7 @@ def readH5FileTest(h5file):
     return h5file.root.X_test , h5file.root.Y_test
 
 class NormalizedSpectrograms:
-    __trainSizeReduction = 0.75
+    __trainSizeReduction = 1#0.75
     def __init__(self):
         try:
             self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_CACHE, mode='r')

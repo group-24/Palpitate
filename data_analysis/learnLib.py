@@ -66,8 +66,8 @@ class RandomRnnParameters():
         self.__cnt += 1
         if self.__cnt > 100:
             raise StopIteration
-        return random.randrange(100,600,100), \
-                random.randrange(50,200,50), \
+        return random.randrange(50,400,50), \
+                random.randrange(50,300,50), \
                 random.uniform(0.4,0.7), \
                 random.uniform(0.4,0.7)
 
@@ -80,7 +80,7 @@ def get_RNN_model(in_shape, ltsm_out_dim = 256,nb_hidden=100, drop1=0.5, drop2=0
     #model.add(Activation('relu'))
     model.add(Dropout(drop1))
 
-    model.add(LSTM(ltsm_out_dim // 2))
+    model.add(LSTM(ltsm_out_dim))
     #model.add(Activation('relu'))
 
     model.add(Flatten())
