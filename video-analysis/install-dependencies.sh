@@ -5,14 +5,15 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 
 # NAMES
-OPENCV_SOURCE_DIR=opencv-2.4.11
+OPENCV_SOURCE_DIR=usr/local
 OPENCV_BUILD_DIR=opencv-build
 
+URL="https://codeload.github.com/Itseez/opencv/zip/3.0.0"
 
 echo ${CYAN}"Installing OpenCV..." ${NC}
-curl https://codeload.github.com/Itseez/opencv/zip/2.4.11 > opencv.zip &&
+curl ${URL} > opencv.zip &&
 echo ${GREEN}"Download complete!" &&
-echo ${CYAn}"Unzipping..!"${NC} &&
+echo ${CYAN}"Unzipping..!"${NC} &&
 unzip opencv.zip &&
 echo ${GREEN}"Unzippig complete!" &&
 echo ${CYAN}"Building Build Directory"${NC} &&
