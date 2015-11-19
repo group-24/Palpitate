@@ -11,6 +11,7 @@ import code
 import errno
 import subprocess as sp
 import learnLib
+import tables as tb
 
 """
 Change this according to your local settings
@@ -292,7 +293,7 @@ class NormalizedSpectrograms:
         self.__y_sd = None
 
     def normalize_bpm(self, bpm):
-        return (bpm - self.__y_mean) / self.__y_sd
+        return (bpm - self.__y_mean) / (self.__y_sd)
 
     def unnormalize_bpm(self, bpm):
         return (bpm * self.__y_sd) + self.__y_mean
@@ -314,8 +315,8 @@ class NormalizedSpectrograms:
 
         self.__getMeanAndSd(X_train, y_train)
         #normalize spectrograms
-        X_train = np.subtract(X_train, self.__mean)
-        X_train = np.divide(X_train, self.__sd)
+        X_train -= self.__mean
+        X_train /= (self.__sd)
 
         #normalize bpms
         print(self.__y_mean,self.__y_sd)
@@ -337,8 +338,8 @@ class NormalizedSpectrograms:
         (X_test, y_test) = readH5FileTest(self.__h5file__)
         self.__getMeanAndSd(X_test, y_test)
 
-        X_test = np.subtract(X_test, self.__mean)
-        X_test = np.divide(X_test, self.__sd)
+        X_test -= self.__mean
+        X_test /= (self.__sd)
 
         Y_test = np.array(list(map(self.normalize_bpm, y_test)))
 
