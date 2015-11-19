@@ -1,4 +1,4 @@
-from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms
+from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms, NormalizedSubjectSplitSpectrograms
 from get_heartrates import get_interesting_heartrates
 from keras.callbacks import EarlyStopping
 from kbhit import KBHit
@@ -11,7 +11,7 @@ import learnLib
 kb = KBHit()
 #(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-ns = NormalizedSpectrograms()
+ns = NormalizedSubjectSplitSpectrograms()#NormalizedSpectrograms()
 
 def sliceToTimeSeries(X):
     divisibleTime = X[:,0,:,:150]
@@ -21,7 +21,8 @@ def sliceToTimeSeries(X):
     return flattenLastTwo
 
 
-(X_train, Y_train) , (X_val, Y_val) = ns.getTrainAndValidationData()
+X_train, Y_train  = ns.getTrainData()
+X_val, Y_val = ns.getValidationData()
 
 #slice the spectrogram
 X_train = sliceToTimeSeries(X_train)
@@ -37,12 +38,13 @@ maxModel = None
 stop = False
 models = {}
 X_val = sliceToTimeSeries(X_val)
+print(X_val.shape)
 
 for args in learnLib.RandomRnnParameters(): #itertools.product(nb_hiddens, drop1s):
     print("Model: ", args)
     model = learnLib.get_RNN_model(X_train[0].shape, *args)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=4)
-    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=40,
+    early_stopping = EarlyStopping(monitor='val_loss', patience=2)
+    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=10,
             verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
 
 
