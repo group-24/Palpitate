@@ -13,8 +13,8 @@ else if [ "$1" = "bash" ]
     then
         docker run -i -t -v $CURRENT:/home/ palpitate/palpitate-image /bin/bash
 else
-        # run the server 
-        docker run -p 5000:5000 -v $CURRENT:/home/ palpitate-docker-image python $SERVER $CONTAINER_VIDEO $CONTAINER_OPENCV
+        # run the server
+        docker run -p 5000:5000 -v $CURRENT:/home/ palpitate/palpitate-image python $SERVER $CONTAINER_VIDEO $CONTAINER_OPENCV
 fi
 fi
 

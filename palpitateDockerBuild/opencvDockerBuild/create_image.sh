@@ -1,1 +1,1 @@
-docker build -t opencv-docker-image .
+docker build -t palpitate/opencv-image .

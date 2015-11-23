@@ -1,4 +1,4 @@
-from ffmpeg-docker-image
+from palpitate/ffmpeg-image
 
 run echo "Building Palpitate docker image"
 
