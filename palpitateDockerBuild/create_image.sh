@@ -1,1 +1,1 @@
-docker build -t palpitate-docker-image .
+docker build -t palpitate/palpitate-image .

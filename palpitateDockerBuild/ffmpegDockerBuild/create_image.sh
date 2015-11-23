@@ -1,1 +1,1 @@
-docker build -t ffmpeg-docker-image .
+docker build -t palpitate/ffmpeg-image .
