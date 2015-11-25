@@ -1,8 +1,16 @@
+
+#  This script is responsible for getting the sppectrogram data for the facial anlaysis
+
 import numpy as np
 import cv2
+from scipy import signal
 
 PATH_TO_OPENCV_CASCADES = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv\\sources\\data\\haarcascades\\"
 SUBJECT_VIDEO_PATH = "D:\\HeartAV\\SensorData\\HeartAV_VideoFiles\\"
+
+import matplotlib.pyplot as plt
+l = []
+i = 0
 
 face_cascade = cv2.CascadeClassifier(PATH_TO_OPENCV_CASCADES + 'haarcascade_frontalface_alt2.xml')
 eye_cascade = cv2.CascadeClassifier(PATH_TO_OPENCV_CASCADES + 'haarcascade_eye.xml')
@@ -15,6 +23,8 @@ video_capture = cv2.VideoCapture(SUBJECT_VIDEO_PATH + 'vp_035_01_00[2014][03][26
 alpha_movement = 0.9
 alpha_face_size = 0.999
 
+while i < 320:
+    i += 1
 # while True:
     # Capture frame-by-frame
     ret, frame = video_capture.read()
@@ -54,7 +64,7 @@ alpha_face_size = 0.999
         center_y = steadyY + half_height
 
         from_middleX = 0.6
-        from_middleY = 0.8
+        from_middleY = 0.7
 
         top_right = (
             steadyX + int((1-from_middleX) * half_width),
@@ -70,11 +80,15 @@ alpha_face_size = 0.999
 
         # just get the green color
         interesting_pixels = frame[top_right[1]:bottom_left[1], top_right[0]:bottom_left[0], 1]
+
+        if i > 200:
+            l.append(interesting_pixels.mean())
+
         # cv2.imshow('sdas', interesting_pixels)
 
 
     # Display the resulting frame
-    # cv2.imshow('Video', frame)
+    cv2.imshow('Video', frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -83,5 +97,17 @@ alpha_face_size = 0.999
 video_capture.release()
 cv2.destroyAllWindows()
 
-plt.plot(range(len(l)), l)
+mean = sum(l)/len(l)
+
+print mean
+
+l = map(lambda x: x - mean, l)
+
+# g = plt.plot(range(len(l)), l)
+# plt.show(g)
+
+f, t, spectrogram = signal.spectrogram(l, 1.0, nperseg=30)
+plt.pcolormesh(t, f, spectrogram)
+plt.ylabel('Frequency [Hz]')
+plt.xlabel('Time [sec]')
 plt.show()
