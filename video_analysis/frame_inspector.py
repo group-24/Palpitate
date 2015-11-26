@@ -32,9 +32,10 @@ class FrameInspector(object):
         raise Error("NOT DONE YET")
 
     def done(self):
-        """Called when processing of a video is finished, flushes the data"""
+        """Called when processing of a video is finished, flushes the window"""
+        print "done called"
         self.frames_processed = 0
-        self.window = None
+        self.window = []
 
     def flush(self):
         """flushed data"""
