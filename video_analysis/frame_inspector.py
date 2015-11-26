@@ -34,6 +34,10 @@ class FrameInspector(object):
     def done(self):
         """Called when processing of a video is finished, flushes the data"""
         self.frames_processed = 0
+        self.window = None
+
+    def flush(self):
+        """flushed data"""
         self.data = None
 
     def get_data(self):
@@ -45,6 +49,8 @@ class FrameInspector(object):
         window = self.window
         self.window = []
 
+        print window
+
         # normalise the time series
         total = 0
         mean = reduce(lambda acc, x: x + acc, window)/len(window)
@@ -52,6 +58,6 @@ class FrameInspector(object):
 
         f, t, spectrogram = signal.spectrogram(window, 1.0, nperseg=30)
         if self.data is None:
-            self.data = spectrogram
+            self.data = np.array([spectrogram])
         else:
-            self.data = np.concatenate(self.data, spectrogram)
+            self.data = np.concatenate((self.data, [spectrogram]))
