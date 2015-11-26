@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, Flatten, TimeDistributedDense
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
-from keras.layers.recurrent import LSTM, GRU
+from keras.layers.recurrent import LSTM, GRU, SimpleDeepRNN
 from keras.layers.noise import GaussianNoise
 from keras.regularizers import l2
 from keras.callbacks import EarlyStopping
@@ -23,7 +23,7 @@ class RandomMlpParameters():
         self.__cnt += 1
         if self.__cnt > 100:
             raise StopIteration
-        return random.randrange(100,1000,100), random.uniform(0.2,0.8)
+        return random.randrange(100,1000,500), random.uniform(0.2,0.8)
 
 def printModels(models):
     for key, value in models.items():
@@ -68,8 +68,8 @@ class RandomRnnParameters():
         if self.__cnt > 100:
             raise StopIteration
         return  random.randrange(300,600,50), \
-                random.randrange(150,600,50), \
-                random.randrange(100,300,50), \
+                random.randrange(100,400,20), \
+                random.randrange(200,300,20), \
                 random.uniform(0.3,0.7), \
                 random.uniform(0.3,0.7)
 
@@ -80,15 +80,15 @@ def get_RNN_model(in_shape,td_num=512, ltsm_out_dim = 256,nb_hidden=100, drop1=0
     model.add(GaussianNoise(0.05, input_shape=in_shape))
     model.add(LSTM(ltsm_out_dim, return_sequences=True))
     reg = l2(0.05)
-    reg.set_param(model.layers[1].get_params()[0][0])
-    model.layers[1].regularizers = [reg]
+    model.add(TimeDistributedDense(td_num, W_regularizer=l2(0.03)))
+    #reg.set_param(model.layers[3].get_params()[0][0])
+    #model.layers[3].regularizers = [reg]
     model.add(Dropout(drop1))
-#    model.add(TimeDistributedDense(td_num, W_regularizer=l2(0.03)))
 
     model.add(LSTM(ltsm_out_dim))
-    reg = l2(0.05)
-    reg.set_param(model.layers[3].get_params()[0][0])
-    model.layers[3].regularizers = [reg]
+  #  reg = l2(0.05)
+  #  reg.set_param(model.layers[3].get_params()[0][0])
+  #  model.layers[3].regularizers = [reg]
     model.add(Dropout(drop1))
 #    model.regularizers = [l2(0.05)]
     #model.add(Activation('relu'))
