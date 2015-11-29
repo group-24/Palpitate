@@ -10,7 +10,7 @@ class HeartRateTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.heartrate_info = gh.get_heartrates(DATAPATH)
+        self.heartrate_info = gh.get_heartrates(DATAPATH, usecache=False)
 
 
     def test_seconds_difference(self):

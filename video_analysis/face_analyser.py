@@ -7,19 +7,29 @@ from scipy import signal
 import matplotlib.pyplot as plt
 import subprocess
 import os
+import sys
+import pickle
 
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data_analysis'))
+if not path in sys.path:
+    sys.path.insert(1, path)
+del path
+
+from get_heartrates import get_heartrates
 from frame_inspector import FrameInspector
 from face_tracker import FaceTracker
 
 PATH_TO_OPENCV_CASCADES = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv\\sources\\data\\haarcascades\\"
-SUBJECT_VIDEO_PATH = "D:\\HeartAV\\SensorData\\HeartAV_VideoFiles\\"
+PATH_TO_HEARTAV =  "D:\\HeartAV\\"
+# SUBJECT_VIDEO_PATH = "D:\\HeartAV\\SensorData\\HeartAV_VideoFiles\\"
+SUBJECT_VIDEO_PATH = os.path.join(PATH_TO_HEARTAV, "SensorData", "HeartAV_VideoFiles")
 
 FRAME_RATE = 30
 WINDOW_SIZE = 4
 
 gui = True
-# this is fucking magic
-# 'ffmpeg -y -ss 3 -i vp_035_01_00[2014][03][26][17][34]28.avi -to 10 -c copy -avoid_negative_ts 1 test.avi'
+subjects_heartrates = get_heartrates(PATH_TO_HEARTAV, window=4)
+
 def analyse_video(subject_state, times):
 
     # getting path to video
@@ -33,8 +43,8 @@ def analyse_video(subject_state, times):
         (spectrograms, heartrates) = x
         (acc_spectrograms, acc_heartrates) = acc
         # (spectrograms, heartrates) = analyse_slice(start, end)
-        acc_spectrograms = np.concatenate(acc_spectrograms, spectrograms)
-        acc_heartrates += heartrates
+        acc_spectrograms = np.concatenate((acc_spectrograms, spectrograms))
+        acc_heartrates = np.append(acc_heartrates, heartrates)
         return (acc_spectrograms, acc_heartrates)
 
     def analyse_slice(start, end):
@@ -44,7 +54,8 @@ def analyse_video(subject_state, times):
 
         # setup video analysis
         tracker = FaceTracker(PATH_TO_OPENCV_CASCADES, gui=gui)
-        inspector = FrameInspector(None)
+        heartrates_for_slice = subjects_heartrates[subject_state]['heartrates'][start:end]
+        inspector = FrameInspector(heartrates_for_slice)
 
         video_capture = cv2.VideoCapture('slice.avi')
 
@@ -77,7 +88,7 @@ def analyse_video(subject_state, times):
         return data
 
 
-    data = map(lambda x: analyse_slice(x[0], x[1]) , times)
+    data = map(lambda x: analyse_slice(x[0], x[1]), times)
     data_from_video = reduce(merge_data , data)
     return data_from_video
 
@@ -92,8 +103,17 @@ def maybe_get_unique_avi_from_subjectState_id(ss_id, path):
     else:
         return None
 
+def write_cache(cache_file, data):
+    with open(cache_file,'wb') as f:
+        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+
 
 sps = analyse_video('43_01', [(200, 210), (500, 540)])
+# sps = analyse_video('43_01', [(200, 210)])
+write_cache('video_analysis.pickle',sps)
+
+
 
 
 

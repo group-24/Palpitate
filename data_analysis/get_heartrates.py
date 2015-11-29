@@ -10,19 +10,26 @@ import os
 import pickle
 
 XLS_CACHE = 'xlsCache'
+GET_HEARTRATES_CACHE = 'get_heartratesCache'
+
 def check_cache(cache_file):
-	with open(cache_file,'rb') as f:
-		data = pickle.load(f)
-		return data
+    with open(cache_file,'rb') as f:
+        data = pickle.load(f)
+        return data
 def write_cache(cache_file, data):
-	with open(cache_file,'wb') as f:
-		pickle.dump(data, f, protocol=4)
+    with open(cache_file,'wb') as f:
+        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def get_heartrates(pathToHeartAV, window=4):
+def get_heartrates(pathToHeartAV, window=4, usecache=True):
     """Returns a dicitionary of <subjectID>_<state> -> {[heartrates], start_time}, each entry in the
     heratrates array for that subject is the mean heartrate for that time window
     (default window: 4)"""
+    if usecache:
+        try:
+            return check_cache(GET_HEARTRATES_CACHE)
+        except Exception:
+            pass
 
     workbook = load_workbook(os.path.join(pathToHeartAV, 'SensorData', 'HeartAV_HeartRateFiles', 'HeartRate.xlsx'))
 
@@ -67,7 +74,7 @@ def get_heartrates(pathToHeartAV, window=4):
             'heartrates': np.array(data), #naming here is weird
             'start': start_time
             }
-
+    write_cache(GET_HEARTRATES_CACHE, heartrate_info)
     return heartrate_info
 
 def get_subjectID_and_state(subjectID):
@@ -83,7 +90,7 @@ def get_interesting_heartrates(pathToHeartAV, window=4):
     (default window: 4)"""
     try:
         return check_cache(XLS_CACHE)
-    except FileNotFoundError:
+    except Exception:
         pass
 
     # SETUP: opening all of the files

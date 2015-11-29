@@ -5,6 +5,8 @@ build/*
 gradle/*
 
 xlsCache
+get_heartratesCache
+video_analysis.pickle
 spectrogramCache.dat
 __pycache__
 *.py~
