@@ -14,6 +14,7 @@ class FrameInspector(object):
     def __init__(self, heartrates):
         self.heartrates = heartrates
         self.frames_processed = 0
+        self.frames_lost = 0
         self.data = None
         self.window = []
 
@@ -23,10 +24,12 @@ class FrameInspector(object):
         # get the greenpixels
         self.window.append(frame[:, :, 1].mean())
 
-        if self.frames_processed == (FRAME_RATE * TIME_SECOND_WINDOW):
+        if self.frames_processed + self.frames_lost == (FRAME_RATE * TIME_SECOND_WINDOW):
             self.process_data()
 
     def lost_frame(self):
+        """To be used when the analysis must continue, even if a frame is lost
+        this is not needed for the video analysis of the HeartAV dataset"""
         raise Error("NOT DONE YET")
 
     def done(self):
@@ -43,7 +46,11 @@ class FrameInspector(object):
 
     def process_data(self):
         """makes the spectrigrams and adds it to data"""
+
+        print 'PROCESSING'
+
         self.frames_processed = 0
+        self.frames_lost = 0
         window = self.window
         self.window = []
 
@@ -68,6 +75,6 @@ class FrameInspector(object):
             )
         else:
             (spectrograms, heartrates) = self.data
-            spectrograms = np.concatenate((spectrograms, [spectrogram]))
+            spectrograms = np.append(spectrograms, [spectrogram], axis=0)
             heartrates = np.append(heartrates, heartrate_for_window)
             self.data = (spectrograms, heartrates)

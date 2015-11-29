@@ -34,13 +34,6 @@ def analyse_video(subject_state, times, path_to_opencv_cascades=PATH_TO_OPENCV_C
     if path_to_video is None:
         return None
 
-    def merge_data(acc, x):
-        (spectrograms, heartrates) = x
-        (acc_spectrograms, acc_heartrates) = acc
-        acc_spectrograms = np.concatenate((acc_spectrograms, spectrograms))
-        acc_heartrates = np.append(acc_heartrates, heartrates)
-        return (acc_spectrograms, acc_heartrates)
-
     def analyse_slice(start, end):
         # slice the subject video to the correct size
         command = 'ffmpeg -y ' + ' -i ' + path_to_video + ' -ss ' + str(start) + ' -to ' + str(end + 0.1) + ' -c copy -avoid_negative_ts 1 slice.avi'
@@ -62,10 +55,9 @@ def analyse_video(subject_state, times, path_to_opencv_cascades=PATH_TO_OPENCV_C
             roi = tracker.detect_face(frame)
 
             if roi is None:
-                raise RuntimeError('face_tracker failed to find face')
+                raise RuntimeError('face_tracker failed to find face at ' + str(start) + '-' + str(end))
             else:
                 inspector.extract(frame)
-
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
@@ -80,9 +72,40 @@ def analyse_video(subject_state, times, path_to_opencv_cascades=PATH_TO_OPENCV_C
         return data
 
 
-    data = map(lambda x: analyse_slice(x[0], x[1]), times)
-    data_from_video = reduce(merge_data , data)
-    return data_from_video
+    # data = map(lambda x: analyse_slice(x[0], x[1]), times)
+
+    analyses = []
+    times_used = []
+    analysis = None
+    for start, end in times:
+        try:
+            analysis = analyse_slice(start, end)
+        except RuntimeError as e:
+            print str(e)
+        else:
+            if len(analysis[0]) > 0:
+                analyses.append(analysis)
+                times_used.append((start, end))
+            else:
+                print "no data found"
+
+    def merge_data(acc, x):
+        print x
+        (spectrograms, heartrates) = x
+        print spectrograms
+        print heartrates
+        (acc_spectrograms, acc_heartrates) = acc
+        print acc_spectrograms.shape
+        if acc_spectrograms.shape[0] == 2:
+            acc_spectrograms = np.append(acc_spectrograms, spectrograms, axis=0)
+        else:
+            acc_spectrograms = np.append(acc_spectrograms, [spectrograms], axis=1)
+        acc_heartrates = np.append(acc_heartrates, heartrates)
+        return (acc_spectrograms, acc_heartrates)
+
+    analyses = reduce(merge_data , analyses)
+    print analyses
+    return (analyses, times)
 
 # shamelessly copied from timotej
 def maybe_get_unique_avi_from_subjectState_id(ss_id, path):
@@ -100,7 +123,7 @@ def write_cache(cache_file, data):
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 # sps = analyse_video('43_01', [(200, 210), (500, 540)])
-sps = analyse_video('43_01', [(200, 204)])
+sps = analyse_video('43_01', [(200, 208), (600, 610)])
 write_cache('video_analysis.pickle',sps)
 
 # stuff that i might need later
