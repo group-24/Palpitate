@@ -24,19 +24,20 @@ PATH_TO_HEARTAV =  "D:\\HeartAV\\"
 FRAME_RATE = 30
 WINDOW_SIZE = 4
 
-subjects_heartrates = get_heartrates(PATH_TO_HEARTAV, window=WINDOW_SIZE)
-
-def analyse_video(subject_state, times, path_to_opencv_cascades=PATH_TO_OPENCV_CASCADES, path_to_heartav=PATH_TO_HEARTAV, gui=True):
+# subjects_heartrates = get_heartrates(PATH_TO_HEARTAV, window=WINDOW_SIZE)
+def analyse_video(subject_state, times, subjects_heartrates,
+ path_to_opencv_cascades=PATH_TO_OPENCV_CASCADES, path_to_heartav=PATH_TO_HEARTAV, gui=True):
     print('analysing: ' + subject_state)
     # getting path to video
     subject_video_path = os.path.join(path_to_heartav, "SensorData", "HeartAV_VideoFiles")
     path_to_video = maybe_get_unique_avi_from_subjectState_id(subject_state, subject_video_path)
-    if path_to_video is None:
-        return None
 
+    if path_to_video is None:
+        raise RuntimeError(subject_state + ' canont be found')
     def analyse_slice(start, end):
         # slice the subject video to the correct size
-        command = 'ffmpeg -y ' + ' -i ' + path_to_video + ' -ss ' + str(start) + ' -to ' + str(end + 0.1) + ' -c copy -avoid_negative_ts 1 slice.avi'
+        command = 'ffmpeg -loglevel panic -y -an' + ' -ss ' + str(start - 2) + ' -i \"' + path_to_video +  '\" -to ' + str((end-start) + 0.1) + ' -c copy -avoid_negative_ts 1 slice.avi'
+        print command
         subprocess.call(command)
 
         # setup video analysis
@@ -46,7 +47,9 @@ def analyse_video(subject_state, times, path_to_opencv_cascades=PATH_TO_OPENCV_C
 
         video_capture = cv2.VideoCapture('slice.avi')
 
+        i = 0
         while True:
+            i += 1
             ret, frame = video_capture.read()
             if not ret or frame is None:
                 print('video finished')
@@ -57,22 +60,20 @@ def analyse_video(subject_state, times, path_to_opencv_cascades=PATH_TO_OPENCV_C
             if roi is None:
                 raise RuntimeError('face_tracker failed to find face at ' + str(start) + '-' + str(end))
             else:
-                inspector.extract(frame)
+                if (i < 2 * FRAME_RATE):
+                    inspector.extract(frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
         inspector.done()
 
-        video_capture.release()
         # When everything is done, release the capture
+        video_capture.release()
         if gui:
             cv2.destroyAllWindows()
         data = inspector.get_data()
         inspector.flush()
         return data
-
-
-    # data = map(lambda x: analyse_slice(x[0], x[1]), times)
 
     analyses = []
     times_used = []
@@ -90,17 +91,13 @@ def analyse_video(subject_state, times, path_to_opencv_cascades=PATH_TO_OPENCV_C
                 print "no data found"
 
     def merge_data(acc, x):
-        print x
         (spectrograms, heartrates) = x
-        print spectrograms
-        print heartrates
         (acc_spectrograms, acc_heartrates) = acc
-        print acc_spectrograms.shape
         if acc_spectrograms.shape[0] == 2:
             acc_spectrograms = np.append(acc_spectrograms, spectrograms, axis=0)
         else:
             acc_spectrograms = np.append(acc_spectrograms, [spectrograms], axis=1)
-        acc_heartrates = np.append(acc_heartrates, heartrates)
+            acc_heartrates = np.append(acc_heartrates, heartrates)
         return (acc_spectrograms, acc_heartrates)
 
     analyses = reduce(merge_data , analyses)
@@ -112,6 +109,7 @@ def maybe_get_unique_avi_from_subjectState_id(ss_id, path):
     candidates = []
     for f in os.listdir(path):
         if f.endswith(".avi") and ss_id in f:
+            print f
             candidates += [path + "\\" + f]
     if len(candidates) == 1:
         return candidates[0]
@@ -121,17 +119,3 @@ def maybe_get_unique_avi_from_subjectState_id(ss_id, path):
 def write_cache(cache_file, data):
     with open(cache_file,'wb') as f:
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-# sps = analyse_video('43_01', [(200, 210), (500, 540)])
-sps = analyse_video('43_01', [(200, 208), (600, 610)])
-write_cache('video_analysis.pickle',sps)
-
-# stuff that i might need later
-# g = plt.plot(range(len(l)), l)
-# plt.show(g)
-
-# f, t, spectrogram = signal.spectrogram(l, 1.0, nperseg=30)
-# plt.pcolormesh(t, f, spectrogram)
-# plt.ylabel('Frequency [Hz]')
-# plt.xlabel('Time [sec]')
-# plt.show()

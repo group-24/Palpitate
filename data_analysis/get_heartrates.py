@@ -85,8 +85,8 @@ def get_subjectID_and_state(subjectID):
     return subjectID[index_to_trim_from:index_to_trim_from+5]
 
 def get_interesting_heartrates(pathToHeartAV, window=4):
-    """Returns a dicitionary of <subjectID>_<state> -> [[description, time, bpm]],
-    where we only take moments from when a subject is talking
+    """Returns a dicitionary of <subjectID>_<state> -> [[description, start-time, bpm]],
+    where we only take moments from when a subject is talking, bpm is the average from start-time and start-time + window
     (default window: 4)"""
     try:
         return check_cache(XLS_CACHE)
@@ -157,7 +157,7 @@ def get_info_for(subject_state, start_time, end_time, activity, heartrate_timing
         total_heartrate += heartrates[seconds_after + i]
         if number_in_batch == window:
             mean_heartrate = total_heartrate / window
-            # HACK: this represents: activity, start_time, heartrate
+            # This represents: activity, start_time, heartrate
             data.append([activity, seconds_after + i - window, mean_heartrate])
             number_in_batch = 0
             total_heartrate = 0

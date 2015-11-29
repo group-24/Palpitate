@@ -55,7 +55,7 @@ class FrameInspector(object):
         self.window = []
 
         # normalise the time series
-        total = 0
+        # total = 0
         # mean = reduce(lambda acc, x: x + acc, window)/len(window)
         # window = map(lambda x: x - mean, window)
 

@@ -66,7 +66,7 @@ class FaceTracker(object):
             center_y = steadyY + half_height
 
             from_middleX = 0.6
-            from_middleY = 0.7
+            from_middleY = 0.5
 
             top_right = (
                 steadyX + int((1-from_middleX) * half_width),
@@ -84,7 +84,13 @@ class FaceTracker(object):
                 cv2.rectangle(frame, top_right, bottom_left, (255, 255, 0), 2)
                 cv2.imshow('Palpitate face tracker', frame)
 
-            # just get the green color
+            self.steadyX = steadyX
+            self.steadyY = steadyY
+            self.steadyHeight = steadyHeight
+            self.steadyWidth = steadyWidth
+            self.alpha_movement = alpha_movement
+            self.alpha_face_size = alpha_face_size
+
             interesting_pixels = frame[top_right[1]:bottom_left[1], top_right[0]:bottom_left[0]]
             return interesting_pixels
 
