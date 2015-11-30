@@ -22,6 +22,7 @@ class FrameInspector(object):
     def extract(self, frame):
         """frame is the sliced pixel of the face"""
         self.frames_processed += 1
+        print self.frames_processed
         # get the greenpixels
         self.window.append(frame[:, :, 1].mean())
 
@@ -42,28 +43,21 @@ class FrameInspector(object):
 
     def process_data(self):
         """makes the spectrigrams and adds it to data"""
-
-        print 'PROCESSING'
-
         self.frames_processed = 0
         self.frames_lost = 0
         window = self.window
         self.window = []
 
-        # normalise the time series
-        # total = 0
-        # mean = reduce(lambda acc, x: x + acc, window)/len(window)
-        # window = map(lambda x: x - mean, window)
-
-        f, t, spectrogram = signal.spectrogram(window, 1.0, nperseg=10)
+        f, t, spectrogram = signal.spectrogram(window, 30, nperseg=10)
         if self.show_spectrograms:
             plt.pcolormesh(t, f, spectrogram)
             plt.ylabel('Frequency [Hz]')
             plt.xlabel('Time [sec]')
             plt.show()
 
-        heartrate_for_window = self.heartrates[0]
-        self.heartrates = self.heartrates[1:]
+        heartrate_for_window = self.heartrates[0:4].mean()
+        print self.heartrates[0:4]
+        self.heartrates = self.heartrates[4:]
         if self.data is None:
             self.data =(
                 np.array([spectrogram]),

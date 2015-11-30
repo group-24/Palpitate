@@ -15,7 +15,7 @@ PATH_TO_HEARTAV =  "E:\\HeartAV"
 WINDOW_SIZE = 4
 
 heartrates = get_heartrates(PATH_TO_HEARTAV)
-intersting_heartrates = get_interesting_heartrates(PATH_TO_HEARTAV)
+intersting_heartrates = get_interesting_heartrates(PATH_TO_HEARTAV, window=1)
 
 def write_cache(cache_file, data):
     with open(cache_file,'wb') as f:
@@ -37,17 +37,22 @@ for subject_state in intersting_heartrates.keys():
         if start == last_time and start - start_of_section <= 20:
             last_time = end
         else:
-            print(start_of_section, last_time)
             times.append((start_of_section, last_time))
             start_of_section = start
             last_time = end
 
-    try:
+    print "times for: " + subject_state
+    print times
+
+    a = analyse_video(subject_state, times, heartrates, path_to_heartav=PATH_TO_HEARTAV)
+    if a != None:
         (data, times) = analyse_video(subject_state, times, heartrates, path_to_heartav=PATH_TO_HEARTAV)
+        print "successful windows: " + str(times)
         specifications[subject_state] = times
         face_data[subject_state] = (data, times)
-    except Exception as e:
-        print(str(e))
+        print '\n'
+    else:
+        print subject_state + ' canont be found\n\n'
 
 write_cache('spec.pickle', specifications)
 write_cache('results.pickle', face_data)

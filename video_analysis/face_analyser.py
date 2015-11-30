@@ -33,12 +33,13 @@ def analyse_video(subject_state, times, subjects_heartrates,
     path_to_video = maybe_get_unique_avi_from_subjectState_id(subject_state, subject_video_path)
 
     if path_to_video is None:
-        raise RuntimeError(subject_state + ' canont be found')
+        return None
+        # raise RuntimeError(subject_state + ' canont be found\n\n')
     def analyse_slice(start, end):
         # slice the subject video to the correct size
-        command = 'ffmpeg -loglevel panic -y -an' + ' -ss ' + str(start - 2) + ' -i \"' + path_to_video +  '\" -to ' + str((end-start) + 0.1) + ' -c copy -avoid_negative_ts 1 slice.avi'
-        print command
+        command = 'ffmpeg -loglevel panic -y -an' + ' -ss ' + str(start - 2) + ' -i \"' + path_to_video +  '\" -to ' + str((end-start) + 2) + ' -c copy -avoid_negative_ts 1 slice.avi'
         subprocess.call(command)
+        print command
 
         # setup video analysis
         tracker = FaceTracker(path_to_opencv_cascades, gui=gui)
@@ -52,16 +53,22 @@ def analyse_video(subject_state, times, subjects_heartrates,
             i += 1
             ret, frame = video_capture.read()
             if not ret or frame is None:
-                print('video finished')
+                print(str((start, end)) + "processed successfuly")
                 break
 
-            roi = tracker.detect_face(frame)
+            roi = None
+
+            try:
+                roi = tracker.detect_face(frame)
+            except RuntimeError as e:
+                raise RuntimeError(e.args[0] +  " at time:" + str((start, end)))
+
 
             if roi is None:
                 raise RuntimeError('face_tracker failed to find face at ' + str(start) + '-' + str(end))
             else:
                 if (i > 2 * FRAME_RATE):
-                    inspector.extract(frame)
+                    inspector.extract(roi)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
@@ -84,7 +91,7 @@ def analyse_video(subject_state, times, subjects_heartrates,
         except RuntimeError as e:
             print str(e)
         else:
-            if len(analysis[0]) > 0:
+            if analysis!= None and len(analysis[0]) > 0:
                 analyses.append(analysis)
                 times_used.append((start, end))
             else:
@@ -93,16 +100,20 @@ def analyse_video(subject_state, times, subjects_heartrates,
     def merge_data(acc, x):
         (spectrograms, heartrates) = x
         (acc_spectrograms, acc_heartrates) = acc
-        if acc_spectrograms.shape[0] == 2:
-            acc_spectrograms = np.append(acc_spectrograms, spectrograms, axis=0)
-        else:
-            acc_spectrograms = np.append(acc_spectrograms, [spectrograms], axis=1)
-            acc_heartrates = np.append(acc_heartrates, heartrates)
+        # if acc_spectrograms.shape[0] == 2:
+        #     print 'this should not be showm'
+        #     acc_spectrograms = np.append([acc_spectrograms], [spectrograms], axis=0)
+        # else:
+        #     acc_spectrograms = np.append(acc_spectrograms, [spectrograms], axis=0)
+        #     acc_heartrates = np.append(acc_heartrates, heartrates)
+
+        acc_spectrograms = np.append(acc_spectrograms, spectrograms, axis=0)
+        acc_heartrates = np.append(acc_heartrates, heartrates)
         return (acc_spectrograms, acc_heartrates)
 
-    analyses = reduce(merge_data , analyses)
-    print analyses
-    return (analyses, times)
+    if len(analyses) > 0:
+        analyses = reduce(merge_data , analyses)
+    return (analyses, times_used)
 
 # shamelessly copied from timotej
 def maybe_get_unique_avi_from_subjectState_id(ss_id, path):
