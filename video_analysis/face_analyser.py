@@ -60,7 +60,7 @@ def analyse_video(subject_state, times, subjects_heartrates,
             if roi is None:
                 raise RuntimeError('face_tracker failed to find face at ' + str(start) + '-' + str(end))
             else:
-                if (i < 2 * FRAME_RATE):
+                if (i > 2 * FRAME_RATE):
                     inspector.extract(frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break

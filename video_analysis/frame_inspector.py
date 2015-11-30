@@ -11,7 +11,8 @@ class FrameInspector(object):
     """This class inspects the frame of a video, then produces spectrograms of the
     desired features of the frame"""
 
-    def __init__(self, heartrates):
+    def __init__(self, heartrates, show_spectrograms=False):
+        self.show_spectrograms = show_spectrograms
         self.heartrates = heartrates
         self.frames_processed = 0
         self.frames_lost = 0
@@ -26,11 +27,6 @@ class FrameInspector(object):
 
         if self.frames_processed + self.frames_lost == (FRAME_RATE * TIME_SECOND_WINDOW):
             self.process_data()
-
-    def lost_frame(self):
-        """To be used when the analysis must continue, even if a frame is lost
-        this is not needed for the video analysis of the HeartAV dataset"""
-        raise Error("NOT DONE YET")
 
     def done(self):
         """Called when processing of a video is finished, flushes the window"""
@@ -59,12 +55,12 @@ class FrameInspector(object):
         # mean = reduce(lambda acc, x: x + acc, window)/len(window)
         # window = map(lambda x: x - mean, window)
 
-        f, t, spectrogram = signal.spectrogram(window, 1.0, nperseg=30)
-        # f, t, spectrogram = signal.spectrogram(window, nperseg=60)
-        # plt.pcolormesh(t, f, spectrogram)
-        # plt.ylabel('Frequency [Hz]')
-        # plt.xlabel('Time [sec]')
-        # plt.show()
+        f, t, spectrogram = signal.spectrogram(window, 1.0, nperseg=10)
+        if self.show_spectrograms:
+            plt.pcolormesh(t, f, spectrogram)
+            plt.ylabel('Frequency [Hz]')
+            plt.xlabel('Time [sec]')
+            plt.show()
 
         heartrate_for_window = self.heartrates[0]
         self.heartrates = self.heartrates[1:]
