@@ -19,12 +19,11 @@ class FrameInspector(object):
         self.data = None
         self.window = []
 
-    def extract(self, frame):
-        """frame is the sliced pixel of the face"""
+    def extract(self, roi):
+        """roi is the sliced pixel of the face"""
         self.frames_processed += 1
-        print self.frames_processed
         # get the greenpixels
-        self.window.append(frame[:, :, 1].mean())
+        self.window.append(roi[:, :, 1].mean())
 
         if self.frames_processed + self.frames_lost == (FRAME_RATE * TIME_SECOND_WINDOW):
             self.process_data()
@@ -56,7 +55,6 @@ class FrameInspector(object):
             plt.show()
 
         heartrate_for_window = self.heartrates[0:4].mean()
-        print self.heartrates[0:4]
         self.heartrates = self.heartrates[4:]
         if self.data is None:
             self.data =(

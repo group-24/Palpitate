@@ -24,7 +24,6 @@ PATH_TO_HEARTAV =  "D:\\HeartAV\\"
 FRAME_RATE = 30
 WINDOW_SIZE = 4
 
-# subjects_heartrates = get_heartrates(PATH_TO_HEARTAV, window=WINDOW_SIZE)
 def analyse_video(subject_state, times, subjects_heartrates,
  path_to_opencv_cascades=PATH_TO_OPENCV_CASCADES, path_to_heartav=PATH_TO_HEARTAV, gui=True):
     print('analysing: ' + subject_state)
@@ -34,12 +33,10 @@ def analyse_video(subject_state, times, subjects_heartrates,
 
     if path_to_video is None:
         return None
-        # raise RuntimeError(subject_state + ' canont be found\n\n')
     def analyse_slice(start, end):
         # slice the subject video to the correct size
         command = 'ffmpeg -loglevel panic -y -an' + ' -ss ' + str(start - 2) + ' -i \"' + path_to_video +  '\" -to ' + str((end-start) + 2) + ' -c copy -avoid_negative_ts 1 slice.avi'
         subprocess.call(command)
-        print command
 
         # setup video analysis
         tracker = FaceTracker(path_to_opencv_cascades, gui=gui)
@@ -100,13 +97,6 @@ def analyse_video(subject_state, times, subjects_heartrates,
     def merge_data(acc, x):
         (spectrograms, heartrates) = x
         (acc_spectrograms, acc_heartrates) = acc
-        # if acc_spectrograms.shape[0] == 2:
-        #     print 'this should not be showm'
-        #     acc_spectrograms = np.append([acc_spectrograms], [spectrograms], axis=0)
-        # else:
-        #     acc_spectrograms = np.append(acc_spectrograms, [spectrograms], axis=0)
-        #     acc_heartrates = np.append(acc_heartrates, heartrates)
-
         acc_spectrograms = np.append(acc_spectrograms, spectrograms, axis=0)
         acc_heartrates = np.append(acc_heartrates, heartrates)
         return (acc_spectrograms, acc_heartrates)
@@ -120,7 +110,6 @@ def maybe_get_unique_avi_from_subjectState_id(ss_id, path):
     candidates = []
     for f in os.listdir(path):
         if f.endswith(".avi") and ss_id in f:
-            print f
             candidates += [path + "\\" + f]
     if len(candidates) == 1:
         return candidates[0]

@@ -16,6 +16,7 @@ def check_cache(cache_file):
     with open(cache_file,'rb') as f:
         data = pickle.load(f)
         return data
+        
 def write_cache(cache_file, data):
     with open(cache_file,'wb') as f:
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -114,7 +115,7 @@ def get_interesting_heartrates(pathToHeartAV, window=4):
         data_for_subject_state = []
         time_info_worksheet = time_info_workbooks[subject_state].sheet_by_index(0)
 
-        # data starts 2 rows down
+        # data starts 2 rows down++9
         for rowidx in range(2, time_info_worksheet.nrows):
             row = time_info_worksheet.row(rowidx)
             activity = row[1].value

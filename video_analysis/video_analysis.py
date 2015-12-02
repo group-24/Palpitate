@@ -10,7 +10,6 @@ if not path in sys.path:
 del path
 from get_heartrates import get_heartrates, get_interesting_heartrates
 
-# PATH_TO_HEARTAV =  "E:\\HeartAV"
 PATH_TO_HEARTAV =  "E:\\HeartAV"
 WINDOW_SIZE = 4
 
@@ -22,7 +21,6 @@ def write_cache(cache_file, data):
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-#  [[description, time, bpm]]
 face_data = {}
 specifications = {}
 for subject_state in intersting_heartrates.keys():
@@ -46,7 +44,7 @@ for subject_state in intersting_heartrates.keys():
 
     a = analyse_video(subject_state, times, heartrates, path_to_heartav=PATH_TO_HEARTAV)
     if a != None:
-        (data, times) = analyse_video(subject_state, times, heartrates, path_to_heartav=PATH_TO_HEARTAV)
+        (data, times) = a
         print "successful windows: " + str(times)
         specifications[subject_state] = times
         face_data[subject_state] = (data, times)
@@ -56,30 +54,3 @@ for subject_state in intersting_heartrates.keys():
 
 write_cache('spec.pickle', specifications)
 write_cache('results.pickle', face_data)
-
-
-
-#
-# times = []
-# data_for_subject = intersting_heartrates['38_01']
-#
-# start_of_section = int(data_for_subject[0][1])
-# last_time = start_of_section
-# for datum in data_for_subject:
-#     start = int(datum[1])
-#     end = start + WINDOW_SIZE
-#     if start == last_time and start - start_of_section <= 20:
-#         last_time = end
-#     else:
-#         print(start_of_section, last_time)
-#         times.append((start_of_section, last_time))
-#         start_of_section = start
-#         last_time = end
-#
-# try:
-#     (data, times) = analyse_video('38_01', times, heartrates, path_to_heartav=PATH_TO_HEARTAV)
-#     print data
-#     print times
-#     specifications['38_01'] = times
-# except Exception as e:
-#     print(str(e))

@@ -29,16 +29,12 @@ class HeartRateTests(unittest.TestCase):
             gui=True
         )
 
-
     def test_one_failed(self):
         # the time (2,5) is to short
-        print self.times
         self.assertEqual(len(self.times), 2)
 
     def test_data_has_same_length(self):
         self.assertEqual(len(self.data[0]), len(self.data[1]))
-        print self.data[0]
-        print self.data[1]
 
     def test_heartrates_correct(self):
         heartrates = self.data[1]
