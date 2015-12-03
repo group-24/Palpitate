@@ -44,10 +44,10 @@ for subject_state in intersting_heartrates.keys():
 
     a = analyse_video(subject_state, times, heartrates, path_to_heartav=PATH_TO_HEARTAV)
     if a != None:
-        (data, times, time_series) = a
+        (data, times) = a
         print "successful windows: " + str(times)
         specifications[subject_state] = times
-        face_data[subject_state] = (data, times, time_series)
+        face_data[subject_state] = (data, times)
         print '\n'
     else:
         print subject_state + ' canont be found\n\n'

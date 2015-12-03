@@ -26,7 +26,7 @@ class HeartRateTests(unittest.TestCase):
             heartrates,
             path_to_opencv_cascades=path_to_cascades,
             path_to_heartav=path_to_heartav,
-            gui=True
+            gui=False
         )
 
     def test_one_failed(self):

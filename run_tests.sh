@@ -1,5 +1,5 @@
 #!/bin/bash
-
+CONTAINER_OPENCV=/opencv/
 source test_utilities/functions.sh
 source test_utilities/try.sh
 
@@ -8,6 +8,12 @@ source test_utilities/try.sh
 step "Running Data Extraction Tests:"
 try cd data_analysis/test
 try python *.t.py
+try cd ../..
+next
+
+step "running video analysis tests"
+try cd video/analysis
+try python *.t.py $CONTAINER_OPENCV
 try cd ..
 next
 
