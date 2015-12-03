@@ -72,7 +72,7 @@ class FaceTracker(object):
         center_y = steadyY + half_height
 
         from_middleX = 0.6
-        from_middleY = 0.5
+        from_middleY = 0.3
 
         top_right = (
             steadyX + int((1-from_middleX) * half_width),

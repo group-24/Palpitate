@@ -35,6 +35,7 @@ class HeartRateTests(unittest.TestCase):
 
     def test_data_has_same_length(self):
         self.assertEqual(len(self.data[0]), len(self.data[1]))
+        self.assertEqual(len(self.data[0]), len(self.data[2]))
 
     def test_heartrates_correct(self):
         heartrates = self.data[1]

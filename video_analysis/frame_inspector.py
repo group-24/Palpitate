@@ -15,7 +15,6 @@ class FrameInspector(object):
         self.show_spectrograms = show_spectrograms
         self.heartrates = heartrates
         self.frames_processed = 0
-        self.frames_lost = 0
         self.data = None
         self.window = []
 
@@ -25,7 +24,7 @@ class FrameInspector(object):
         # get the greenpixels
         self.window.append(roi[:, :, 1].mean())
 
-        if self.frames_processed + self.frames_lost == (FRAME_RATE * TIME_SECOND_WINDOW):
+        if self.frames_processed == (FRAME_RATE * TIME_SECOND_WINDOW):
             self.process_data()
 
     def done(self):
@@ -43,12 +42,12 @@ class FrameInspector(object):
     def process_data(self):
         """makes the spectrigrams and adds it to data"""
         self.frames_processed = 0
-        self.frames_lost = 0
         window = self.window
         self.window = []
 
-        f, t, spectrogram = signal.spectrogram(window, 30, nperseg=10)
+        f, t, spectrogram = signal.spectrogram(window, 30, nperseg=10, nfft=50, noverlap=8)
         if self.show_spectrograms:
+            print spectrogram
             plt.pcolormesh(t, f, spectrogram)
             plt.ylabel('Frequency [Hz]')
             plt.xlabel('Time [sec]')
@@ -59,10 +58,12 @@ class FrameInspector(object):
         if self.data is None:
             self.data =(
                 np.array([spectrogram]),
-                np.array(heartrate_for_window)
+                np.array(heartrate_for_window),
+                [window]
             )
         else:
-            (spectrograms, heartrates) = self.data
+            (spectrograms, heartrates, time_series) = self.data
             spectrograms = np.append(spectrograms, [spectrogram], axis=0)
             heartrates = np.append(heartrates, heartrate_for_window)
-            self.data = (spectrograms, heartrates)
+            time_series += [self.window]
+            self.data = (spectrograms, heartrates, time_series)
