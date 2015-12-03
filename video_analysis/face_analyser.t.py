@@ -3,7 +3,9 @@ import sys
 import numpy as np
 from face_analyser import analyse_video
 
-DATAPATH = 'dummyAV'
+path_to_cascades = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv\\sources\\data\\haarcascades\\"
+if len(sys.argv) > 1:
+    path_to_cascades = sys.argv[1]
 
 class HeartRateTests(unittest.TestCase):
 
@@ -15,9 +17,6 @@ class HeartRateTests(unittest.TestCase):
                 'heartrates': np.array([0,1,2,3,4,5,6,7,8,9])
             }
         }
-        path_to_cascades = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv\\sources\\data\\haarcascades\\"
-        if len(sys.argv) > 1:
-            path_to_cascades = sys.argv[1]
 
         path_to_heartav = "test"
         (self.data, self.times) = analyse_video(
