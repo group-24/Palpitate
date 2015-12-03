@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Dropout, Flatten, TimeDistributedDense
+from keras.layers.core import Dense, Activation, Dropout, Flatten, TimeDistributedDense, Reshape, Permute
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.recurrent import LSTM, GRU, SimpleDeepRNN
 from keras.layers.noise import GaussianNoise
@@ -11,6 +11,7 @@ from math import sqrt
 
 import random
 import numpy as np
+import code
 
 class RandomMlpParameters():
     def __init__(self):
@@ -102,4 +103,62 @@ def get_RNN_model(in_shape,td_num=512, ltsm_out_dim = 256,nb_hidden=100, drop1=0
     model.add(Activation('linear'))
 
     model.compile(loss='mse', optimizer='rmsprop')
+    return model
+
+
+
+class RandomCnnRnnParameters():
+    def __init__(self):
+        self.__cnt = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.__cnt += 1
+        if self.__cnt > 100:
+            raise StopIteration
+        return  random.randrange(16,32,2), \
+                random.randrange(3,15,2), \
+                random.randrange(32,256,6), \
+                random.randrange(5,15,2), \
+                random.randrange(50,300,30), \
+                random.uniform(0.3,0.7), \
+                random.uniform(0.3,0.7)
+
+def get_CNN_RNN_model(in_shape, nb_filters1 = 32,nb_col1=5,
+                                nb_filters2 = 64,nb_col2=10,
+                                ltsm_out_dim = 256, drop1=0.5, drop2=0.5):
+    model = Sequential()
+
+    # shape (n_images, frequencies, time)
+    # shape (1,200,158)
+    model.add(GaussianNoise(0.01, input_shape=in_shape))
+    #Convolution2D(nb_filter, nb_row, nb_col)
+
+    model.add(Convolution2D(nb_filters1,in_shape[1],nb_col1))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D((1,2)))
+    model.add(Dropout(drop2))
+
+    # shape (16,1,77)
+    model.add(Convolution2D(nb_filters2,1,nb_col2))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D((1,2)))
+    model.add(Dropout(drop2))
+
+
+    # shape (32,1,68)
+    shape = model.layers[-1].input_shape
+    model.add(Reshape(dims=(shape[1],shape[3])))
+    #shape (32,68)
+    model.add(Permute((2,1)))
+    model.add(Dropout(drop1))
+    model.add(LSTM(ltsm_out_dim))
+    model.add(Dropout(drop1))
+
+    model.add(Dense(1))
+    model.add(Activation('linear'))
+
+    model.compile(loss='mse', optimizer='adam')
     return model

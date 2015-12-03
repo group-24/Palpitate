@@ -354,6 +354,7 @@ class NormalizedSpectrograms:
 
 
 class NormalizedSubjectSplitSpectrograms:
+    __trainSizeReduction = 0.75
     def __init__(self):
         try:
             self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_BY_SUBJECT_CACHE, mode='r')
@@ -385,9 +386,9 @@ class NormalizedSubjectSplitSpectrograms:
        # (X, y) = readH5FileValidate(self.__h5file__)
 
         #so it fits into memory without paging
-        #reduce_to = int(X_train.shape[0] * NormalizedSpectrograms.__trainSizeReduction)
-        #X_train = X_train[:reduce_to]
-        #y_train = y_train[:reduce_to]
+        reduce_to = int(X_train.shape[0] * NormalizedSubjectSplitSpectrograms.__trainSizeReduction)
+        X_train = X_train[:reduce_to]
+        y_train = y_train[:reduce_to]
 
 
       #  y_train = np.concatenate([y_train, y],0)
@@ -396,8 +397,8 @@ class NormalizedSubjectSplitSpectrograms:
         y_train = np.array(y_train)
         print(X_train.shape)
         rnd = np.random.rand(y_train.shape[0])
-        X_train = X_train[rnd > 0.9]
-        y_train = y_train[rnd > 0.9]
+#        X_train = X_train[rnd > 0.9]
+#        y_train = y_train[rnd > 0.9]
 
         X_train = X_train[y_train < 140]
         y_train = y_train[y_train < 140]
@@ -446,8 +447,8 @@ class NormalizedSubjectSplitSpectrograms:
         rnd = np.random.rand(y.shape[0])
         print(rnd.shape)
         print(X.shape)
-        X = X[rnd > 0.9]
-        y = y[rnd > 0.9]
+#        X = X[rnd > 0.9]
+#        y = y[rnd > 0.9]
 
 
         X  -= self.__mean
