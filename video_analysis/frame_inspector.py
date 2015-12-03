@@ -5,7 +5,7 @@ from collections import deque
 TIME_SECOND_WINDOW = 4
 FRAME_RATE = 30
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 class FrameInspector(object):
     """This class inspects the frame of a video, then produces spectrograms of the
@@ -47,10 +47,10 @@ class FrameInspector(object):
 
         f, t, spectrogram = signal.spectrogram(window, 30, nperseg=10, nfft=50, noverlap=5)
         if self.show_spectrograms:
-            plt.pcolormesh(t, f, spectrogram)
-            plt.ylabel('Frequency [Hz]')
-            plt.xlabel('Time [sec]')
-            plt.show()
+            # plt.pcolormesh(t, f, spectrogram)
+            # plt.ylabel('Frequency [Hz]')
+            # plt.xlabel('Time [sec]')
+            # plt.show()
 
         heartrate_for_window = self.heartrates[0:4].mean()
         self.heartrates = self.heartrates[4:]
