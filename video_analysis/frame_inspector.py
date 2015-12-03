@@ -46,7 +46,7 @@ class FrameInspector(object):
         self.window = []
 
         f, t, spectrogram = signal.spectrogram(window, 30, nperseg=10, nfft=50, noverlap=5)
-        if self.show_spectrograms:
+        # if self.show_spectrograms:
             # plt.pcolormesh(t, f, spectrogram)
             # plt.ylabel('Frequency [Hz]')
             # plt.xlabel('Time [sec]')
