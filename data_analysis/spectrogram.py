@@ -355,7 +355,7 @@ class NormalizedSpectrograms:
 
 class NormalizedSubjectSplitSpectrograms:
     __trainSizeReduction = 0.75
-    def __init__(self):
+    def __init__(self, subjectIdependant=True):
         try:
             self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_BY_SUBJECT_CACHE, mode='r')
         except IOError:
@@ -363,6 +363,7 @@ class NormalizedSubjectSplitSpectrograms:
             generate_per_subject_cache(get_interesting_heartrates(HEART_AV_ROOT))
             self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_BY_SUBJECT_CACHE, mode='r')
             pass
+        self.__subjectIdependant = subjectIdependant
         self.__mean = None
         self.__sd = None
         self.__y_mean = None
@@ -383,16 +384,17 @@ class NormalizedSubjectSplitSpectrograms:
 
     def getTrainData(self, validation_split=7):
         (X_train, y_train) = readH5FileTrain(self.__h5file__)
-       # (X, y) = readH5FileValidate(self.__h5file__)
 
         #so it fits into memory without paging
         reduce_to = int(X_train.shape[0] * NormalizedSubjectSplitSpectrograms.__trainSizeReduction)
         X_train = X_train[:reduce_to]
         y_train = y_train[:reduce_to]
 
+        if not self.__subjectIdependant:
+            (X, y) = readH5FileValidate(self.__h5file__)
+            y_train = np.concatenate([y_train, y],0)
+            X_train = np.concatenate([X_train, X],0)
 
-      #  y_train = np.concatenate([y_train, y],0)
-      #  X_train = np.concatenate([X_train, X],0)
         X_train = np.array(X_train)
         y_train = np.array(y_train)
         print(X_train.shape)
@@ -415,13 +417,14 @@ class NormalizedSubjectSplitSpectrograms:
         #shuffle everything
         learnLib.shuffle_in_unison(X_train, y_train)
 
-#        split_at = X_train.shape[0] // 4
-#
-#        self.X_validate = X_train[:split_at]
-#        self.Y_validate = np.array(list(map(self.normalize_bpm, y_train[:split_at])))
-#
-#        Y_train = np.array(list(map(self.normalize_bpm, y_train[split_at:])))
-#        X_train = (X_train[split_at:])
+        if not self.__subjectIdependant:
+            split_at = X_train.shape[0] // 4
+
+            self.X_validate = X_train[:split_at]
+            self.Y_validate = np.array(list(map(self.normalize_bpm, y_train[:split_at])))
+
+            y_train = y_train[split_at:]
+            X_train = (X_train[split_at:])
 
 
         Y_train = np.array(list(map(self.normalize_bpm, y_train)))
@@ -438,7 +441,8 @@ class NormalizedSubjectSplitSpectrograms:
         return X_test, Y_test
 
     def getValidationData(self):
-        #return self.X_validate, self.Y_validate
+        if not self.__subjectIdependant:
+            return self.X_validate, self.Y_validate
         (X, y) = readH5FileValidate(self.__h5file__)
 
         X = np.array(X)

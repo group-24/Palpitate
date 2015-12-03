@@ -11,7 +11,7 @@ import learnLib
 kb = KBHit()
 #(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-ns = NormalizedSubjectSplitSpectrograms()#NormalizedSpectrograms()
+ns = NormalizedSubjectSplitSpectrograms(subjectIdependant=False)#NormalizedSpectrograms()
 
 X_train, Y_train  = ns.getTrainData()
 X_val, Y_val = ns.getValidationData()
@@ -32,7 +32,7 @@ for args in learnLib.RandomCnnRnnParameters(): #itertools.product(nb_hiddens, dr
     print("Model: ", args)
     model = learnLib.get_CNN_RNN_model(X_train[0].shape, *args)
     early_stopping = EarlyStopping(monitor='val_loss', patience=3)
-    history = model.fit(X_train, Y_train, batch_size=30, nb_epoch=15,
+    history = model.fit(X_train, Y_train, batch_size=50, nb_epoch=30,
             verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
 
 
