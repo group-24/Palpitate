@@ -3,10 +3,13 @@ import sys
 import numpy as np
 from face_analyser import analyse_video
 import os
+import numpy as np
 
 path_to_cascades = os.environ.get('CONTAINER_OPENCV')
 if path_to_cascades is None:
-    path_to_cascades = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv\\sources\\data\\haarcascades\\"
+    path_to_cascades = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv"
+
+path_to_cascades = os.path.join(path_to_cascades, 'sources', 'data', 'haarcascades')
 
 class HeartRateTests(unittest.TestCase):
 
@@ -39,8 +42,8 @@ class HeartRateTests(unittest.TestCase):
 
     def test_heartrates_correct(self):
         heartrates = self.data[1]
-        self.assertEqual(heartrates[0], 6.5)
-        self.assertEqual(heartrates[1], 3.5)
+        np.testing.assert_array_equal(heartrates[0], np.array([5,6,7,8]))
+        np.testing.assert_array_equal(heartrates[1], np.array([2,3,4,5]))
 
 if __name__ == '__main__':
     unittest.main()

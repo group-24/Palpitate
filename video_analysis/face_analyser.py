@@ -98,7 +98,7 @@ def analyse_video(subject_state, times, subjects_heartrates,
         (spectrograms, heartrates, time_series) = x
         (acc_spectrograms, acc_heartrates, acc_time_series) = acc
         acc_spectrograms = np.append(acc_spectrograms, spectrograms, axis=0)
-        acc_heartrates = np.append(acc_heartrates, heartrates)
+        acc_heartrates = np.append(acc_heartrates, heartrates, axis=0)
         acc_time_series += time_series
         return (acc_spectrograms, acc_heartrates, acc_time_series)
 

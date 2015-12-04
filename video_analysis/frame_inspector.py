@@ -52,17 +52,23 @@ class FrameInspector(object):
             # plt.xlabel('Time [sec]')
             # plt.show()
 
-        heartrate_for_window = self.heartrates[0:4].mean()
+        # heartrate_for_window = self.heartrates[0:4].mean()
+        heartrate_for_window = self.heartrates[0:4]
+
+        # saftey measure to make sure that ffmpeg doesnt analyse a slice too much
+        if len(heartrate_for_window) != TIME_SECOND_WINDOW:
+            return
+
         self.heartrates = self.heartrates[4:]
         if self.data is None:
             self.data =(
                 np.array([spectrogram]),
-                np.array(heartrate_for_window),
+                np.array([heartrate_for_window]),
                 [window]
             )
         else:
             (spectrograms, heartrates, time_series) = self.data
             spectrograms = np.append(spectrograms, [spectrogram], axis=0)
-            heartrates = np.append(heartrates, heartrate_for_window)
+            heartrates = np.append(heartrates, [heartrate_for_window])
             time_series += [self.window]
             self.data = (spectrograms, heartrates, time_series)
