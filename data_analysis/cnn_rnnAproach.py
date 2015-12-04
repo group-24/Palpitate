@@ -116,9 +116,9 @@ X_train = X_train[:,0,:,:,:]
 X_val, Y_val = ns.getValidationData()
 X_val = X_val[:,:,:,0:50]
 
-repeat_cnt = 6
+repeat_cnt = 4
 Y_train = repeat_n_times(Y_train, repeat_cnt)
-Y_train = np.repeat(Y_train,11,axis=0);
+Y_train = np.repeat(Y_train,X_train.shape[0] // Y_train.shape[0],axis=0);
 Y_val = repeat_n_times(Y_val, repeat_cnt)
 
 

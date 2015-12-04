@@ -147,13 +147,13 @@ def get_CNN_RNN_model(in_shape, nb_filters1 = 32,nb_col1=5,
 
     model.add(Convolution2D(nb_filters1,in_shape[1],nb_col1, W_regularizer=l2(0.05)))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D((1,2)))
+#    model.add(MaxPooling2D((1,2)))
     model.add(Dropout(drop2))
 
     # shape (16,1,77)
     model.add(Convolution2D(nb_filters2,1,nb_col2,W_regularizer=l2(0.05)))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D((1,2)))
+#    model.add(MaxPooling2D((1,2)))
     model.add(Dropout(drop2))
 
 
