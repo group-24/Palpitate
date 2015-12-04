@@ -1,6 +1,4 @@
-
-#  This script is responsible for getting the sppectrogram data for the facial anlaysis
-
+#  These methods is responsible for getting the sppectrogram data for the facial anlaysis
 import numpy as np
 import cv2
 from scipy import signal
@@ -8,6 +6,7 @@ import subprocess
 import os
 import sys
 import pickle
+import shlex
 
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data_analysis'))
 if not path in sys.path:
@@ -36,8 +35,8 @@ def analyse_video(subject_state, times, subjects_heartrates,
     def analyse_slice(start, end):
         # slice the subject video to the correct size
         command = 'ffmpeg -loglevel panic -y -an' + ' -ss ' + str(start - 2) + ' -i \"' + path_to_video +  '\" -to ' + str((end-start) + 2) + ' -c copy -avoid_negative_ts 1 slice.avi'
-        subprocess.call(command)
-
+        print command
+        subprocess.call(shlex.split(command))
         # setup video analysis
         tracker = FaceTracker(path_to_opencv_cascades, gui=gui)
         heartrates_for_slice = subjects_heartrates[subject_state]['heartrates'][start:end]
@@ -111,7 +110,8 @@ def maybe_get_unique_avi_from_subjectState_id(ss_id, path):
     candidates = []
     for f in os.listdir(path):
         if f.endswith(".avi") and ss_id in f:
-            candidates += [path + "\\" + f]
+            # candidates += [path + "\\" + f]
+            candidates += [os.path.join(path, f)]
     if len(candidates) == 1:
         return candidates[0]
     else:
