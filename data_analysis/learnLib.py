@@ -45,11 +45,20 @@ def get_2_layer_MLP_model(in_shape, nb_hidden=50, drop1=0.1):
     model.compile(loss='mse', optimizer='adam')
     return model
 
+def assess_2dmodel(model, X_test, Y_test):
+    predictions = model.predict(X_test)
+    minDim = min(Y_test.shape[1], predictions.shape[1])
+    r = pearsonr(np.mean(predictions[:,0:minDim,0],axis=0), np.mean(Y_test[:,0:minDim,0],axis=0))
+    rmse = sqrt(mean_squared_error(predictions[:,0:minDim,0], Y_test[:,0:minDim,0]))
+    return r, rmse, predictions
+
 def assess_model(model, X_test, Y_test):
     predictions = model.predict(X_test)
-    r = pearsonr(predictions[:,0], Y_test)
+    r = pearsonr(predictions[:,0], Y_test[:,0])
     rmse = sqrt(mean_squared_error(predictions, Y_test))
     return r, rmse, predictions
+
+
 
 def shuffle_in_unison(a, b):
     rng_state = np.random.get_state()
@@ -133,16 +142,16 @@ def get_CNN_RNN_model(in_shape, nb_filters1 = 32,nb_col1=5,
 
     # shape (n_images, frequencies, time)
     # shape (1,200,158)
-    model.add(GaussianNoise(0.01, input_shape=in_shape))
+    model.add(GaussianNoise(0.05, input_shape=in_shape))
     #Convolution2D(nb_filter, nb_row, nb_col)
 
-    model.add(Convolution2D(nb_filters1,in_shape[1],nb_col1))
+    model.add(Convolution2D(nb_filters1,in_shape[1],nb_col1, W_regularizer=l2(0.05)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D((1,2)))
     model.add(Dropout(drop2))
 
     # shape (16,1,77)
-    model.add(Convolution2D(nb_filters2,1,nb_col2))
+    model.add(Convolution2D(nb_filters2,1,nb_col2,W_regularizer=l2(0.05)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D((1,2)))
     model.add(Dropout(drop2))
@@ -153,12 +162,12 @@ def get_CNN_RNN_model(in_shape, nb_filters1 = 32,nb_col1=5,
     model.add(Reshape(dims=(shape[1],shape[3])))
     #shape (32,68)
     model.add(Permute((2,1)))
-    model.add(Dropout(drop1))
-    model.add(LSTM(ltsm_out_dim))
+    model.add(LSTM(ltsm_out_dim,return_sequences=True))
     model.add(Dropout(drop1))
 
-    model.add(Dense(1))
+    model.add(TimeDistributedDense(1, W_regularizer=l2(0.05)))
     model.add(Activation('linear'))
+    print("Model output " + str(model.layers[-1].input_shape))
 
     model.compile(loss='mse', optimizer='adam')
     return model

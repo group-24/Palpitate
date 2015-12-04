@@ -399,8 +399,8 @@ class NormalizedSubjectSplitSpectrograms:
         y_train = np.array(y_train)
         print(X_train.shape)
         rnd = np.random.rand(y_train.shape[0])
-#        X_train = X_train[rnd > 0.9]
-#        y_train = y_train[rnd > 0.9]
+        X_train = X_train[rnd > 0.8]
+        y_train = y_train[rnd > 0.8]
 
         X_train = X_train[y_train < 140]
         y_train = y_train[y_train < 140]
