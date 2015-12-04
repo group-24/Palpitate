@@ -13,7 +13,7 @@ next
 
 step "running video analysis tests"
 try cd video_analysis
-try python *.t.py $CONTAINER_OPENCV
+try python *.t.py
 try cd ..
 next
 

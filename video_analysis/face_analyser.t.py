@@ -2,10 +2,11 @@ import unittest
 import sys
 import numpy as np
 from face_analyser import analyse_video
+import os
 
-path_to_cascades = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv\\sources\\data\\haarcascades\\"
-if len(sys.argv) > 1:
-    path_to_cascades = sys.argv[1]
+path_to_cascades = os.environ.get('CONTAINER_OPENCV')
+if path_to_cascades is None:
+    path_to_cascades = "C:\\Users\\Sam Coope\\Documents\\Programming\\opencv\\sources\\data\\haarcascades\\"
 
 class HeartRateTests(unittest.TestCase):
 
