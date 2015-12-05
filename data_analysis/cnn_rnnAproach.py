@@ -1,4 +1,4 @@
-from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms, NormalizedSubjectSplitSpectrograms
+from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms, NormalizedSubjectSplitSpectrograms, getVideoSpectrograms
 from get_heartrates import get_interesting_heartrates
 from keras.callbacks import EarlyStopping
 from kbhit import KBHit
@@ -11,7 +11,8 @@ import learnLib
 kb = KBHit()
 #(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-ns = NormalizedSubjectSplitSpectrograms(subjectIdependant=False)#NormalizedSpectrograms()
+#ns = NormalizedSubjectSplitSpectrograms(subjectIdependant=False)#NormalizedSpectrograms()
+ns = NormalizedSpectrograms(getVideoSpectrograms())
 
 X_train, Y_train  = ns.getTrainData()
 X_val, Y_val = ns.getValidationData()
@@ -31,8 +32,8 @@ models = {}
 for args in learnLib.RandomCnnRnnParameters(): #itertools.product(nb_hiddens, drop1s):
     print("Model: ", args)
     model = learnLib.get_CNN_RNN_model(X_train[0].shape, *args)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3)
-    history = model.fit(X_train, Y_train, batch_size=50, nb_epoch=30,
+    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    history = model.fit(X_train, Y_train, batch_size=50, nb_epoch=50,
             verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
 
 

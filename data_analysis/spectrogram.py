@@ -361,7 +361,7 @@ class VideoSpectrograms:
         X, y = [],[]
         for subject_state in self.split_dict[name]:
             if self.spectrogram_dict[subject_state] != ([],[]):
-                X += [x for x in self.spectrogram_dict[subject_state][0][0]]
+                X += [[x] for x in self.spectrogram_dict[subject_state][0][0]]
                 y += list(map(statistics.mean,self.spectrogram_dict[subject_state][0][1]))
         return np.array(X), np.array(y)
 
