@@ -1,4 +1,4 @@
-from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms, NormalizedSubjectSplitSpectrograms
+from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms, NormalizedSubjectSplitSpectrograms, getVideoSpectrograms
 from get_heartrates import get_interesting_heartrates
 from keras.callbacks import EarlyStopping
 from kbhit import KBHit
@@ -102,8 +102,13 @@ def sliding_window(a,ws,ss = None,flatten = True):
 
 #(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
+<<<<<<< HEAD
 ns = NormalizedSubjectSplitSpectrograms(subjectIdependant=True)#NormalizedSpectrograms()
 
+=======
+#ns = NormalizedSubjectSplitSpectrograms(subjectIdependant=False)#NormalizedSpectrograms()
+ns = NormalizedSpectrograms(getVideoSpectrograms())
+>>>>>>> videoML
 
 X_train, Y_train  = ns.getTrainData()
 print(X_train.shape)
@@ -141,7 +146,7 @@ for args in learnLib.RandomCnnRnnParameters(): #itertools.product(nb_hiddens, dr
     model = learnLib.get_CNN_RNN_model(X_train[0].shape, *args)
     early_stopping = EarlyStopping(monitor='val_loss', patience=3)
     history = model.fit(X_train, Y_train, batch_size=50, nb_epoch=10,
-            verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
+           verbose=1, validation_data=(X_val,Y_val), callbacks=[early_stopping])
 
 
     # most recent loss hist.history["loss"][-1]

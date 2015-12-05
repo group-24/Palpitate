@@ -24,7 +24,7 @@ class RandomMlpParameters():
         self.__cnt += 1
         if self.__cnt > 100:
             raise StopIteration
-        return random.randrange(100,1000,500), random.uniform(0.2,0.8)
+        return random.randrange(10,1000,50), random.uniform(0.2,0.8)
 
 def printModels(models):
     for key, value in models.items():
@@ -88,9 +88,10 @@ def get_RNN_model(in_shape,td_num=512, ltsm_out_dim = 256,nb_hidden=100, drop1=0
     model = Sequential()
 
     model.add(GaussianNoise(0.05, input_shape=in_shape))
+    model.add(TimeDistributedDense(td_num))
     model.add(LSTM(ltsm_out_dim, return_sequences=True))
     reg = l2(0.05)
-    model.add(TimeDistributedDense(td_num, W_regularizer=l2(0.03)))
+#    model.add(TimeDistributedDense(td_num, W_regularizer=l2(0.03)))
     #reg.set_param(model.layers[3].get_params()[0][0])
     #model.layers[3].regularizers = [reg]
     model.add(Dropout(drop1))
@@ -127,10 +128,10 @@ class RandomCnnRnnParameters():
         self.__cnt += 1
         if self.__cnt > 100:
             raise StopIteration
-        return  random.randrange(16,32,2), \
-                random.randrange(3,15,2), \
-                random.randrange(32,256,6), \
-                random.randrange(5,15,2), \
+        return  random.randrange(16,128,2), \
+                random.randrange(2,4,2), \
+                random.randrange(32,512,6), \
+                random.randrange(5,8,2), \
                 random.randrange(50,300,30), \
                 random.uniform(0.3,0.7), \
                 random.uniform(0.3,0.7)
