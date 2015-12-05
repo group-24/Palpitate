@@ -102,13 +102,10 @@ def sliding_window(a,ws,ss = None,flatten = True):
 
 #(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-<<<<<<< HEAD
 ns = NormalizedSubjectSplitSpectrograms(subjectIdependant=True)#NormalizedSpectrograms()
 
-=======
 #ns = NormalizedSubjectSplitSpectrograms(subjectIdependant=False)#NormalizedSpectrograms()
 ns = NormalizedSpectrograms(getVideoSpectrograms())
->>>>>>> videoML
 
 X_train, Y_train  = ns.getTrainData()
 print(X_train.shape)
