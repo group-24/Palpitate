@@ -1,10 +1,10 @@
-import numpy as np
+import statistics
 import os
 from scipy.io import wavfile
 from get_heartrates import get_interesting_heartrates
 from scipy import signal
 from get_heartrates import check_cache, write_cache
-from keras.utils.io_utils import HDF5Matrix
+#from keras.utils.io_utils import HDF5Matrix
 
 import re
 import random
@@ -13,6 +13,8 @@ import errno
 import subprocess as sp
 import learnLib
 import tables as tb
+import pickle
+import numpy as np
 
 """
 Change this according to your local settings
@@ -284,44 +286,35 @@ def readH5FileValidate(h5file):
     return h5file.root.X_validate , h5file.root.Y_validate
 
 class NormalizedSpectrograms:
-    __trainSizeReduction = 0.75
-    def __init__(self):
-        try:
-            self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_CACHE, mode='r')
-        except IOError:
-            #todo, needs to regenerate the cache
-            pass
+    def __init__(self, spectrograms):
+        self.spectrograms = spectrograms
         self.__mean = None
         self.__sd = None
         self.__y_mean = None
         self.__y_sd = None
-
     def normalize_bpm(self, bpm):
         return (bpm - self.__y_mean) / (self.__y_sd)
 
     def unnormalize_bpm(self, bpm):
         return (bpm * self.__y_sd) + self.__y_mean
 
-    def __getMeanAndSd(self, X, y):
+    def __getMeanAndSd(self):
         if(self.__mean is None):
+            X, y = self.spectrograms.getTrainData()
             self.__mean = np.average(X,0)
             self.__sd = np.std(X, 0)
             self.__y_mean = np.average(y)
             self.__y_sd = np.std(y)
 
-    def getTrainAndValidationData(self, validation_split=7):
-        (X_train, y_train) = readH5FileTrain(self.__h5file__)
-
-        #so it fits into memory without paging
-        reduce_to = int(X_train.shape[0] * NormalizedSpectrograms.__trainSizeReduction)
-        X_train = X_train[:reduce_to]
-        y_train = y_train[:reduce_to]
+    def getTrainData(self):
+        (X_train, y_train) = self.spectrograms.getTrainData()
 
         X_train = X_train[y_train < 140]
         y_train = y_train[y_train < 140]
 
-        self.__getMeanAndSd(X_train, y_train)
+        self.__getMeanAndSd()
         #normalize spectrograms
+        print(self.__mean.shape)
         X_train -= self.__mean
         X_train /= (self.__sd)
 
@@ -329,21 +322,15 @@ class NormalizedSpectrograms:
         print(self.__y_mean,self.__y_sd)
 
         #shuffle everything
-        learnLib.shuffle_in_unison(X_train, y_train)
+        #learnLib.shuffle_in_unison(X_train, y_train)
 
-        split_at = X_train.shape[0] // validation_split
+        Y_train = np.array(list(map(self.normalize_bpm, y_train)))
 
-        X_validate = X_train[:split_at]
-        Y_validate = np.array(list(map(self.normalize_bpm, y_train[:split_at])))
-
-        Y_train = np.array(list(map(self.normalize_bpm, y_train[split_at:])))
-        X_train = (X_train[split_at:])
-
-        return (X_train, Y_train), (X_validate, Y_validate)
+        return (X_train, Y_train)
 
     def getTestData(self):
-        (X_test, y_test) = readH5FileTest(self.__h5file__)
-        self.__getMeanAndSd(X_test, y_test)
+        (X_test, y_test) = self.spectrograms.getTestData()
+        self.__getMeanAndSd()
 
         X_test -= self.__mean
         X_test /= (self.__sd)
@@ -351,7 +338,37 @@ class NormalizedSpectrograms:
         Y_test = np.array(list(map(self.normalize_bpm, y_test)))
 
         return X_test, Y_test
+    def getValidationData(self):
+        (X_test, y_test) = self.spectrograms.getTestData()
+        self.__getMeanAndSd()
+        X_test -= self.__mean
+        X_test /= (self.__sd)
+        Y_test = np.array(list(map(self.normalize_bpm, y_test)))
+        return X_test, Y_test
 
+
+class VideoSpectrograms:
+    def __init__(self, spectrogram_dict, split_dict):
+        self.spectrogram_dict = spectrogram_dict
+        self.split_dict = split_dict
+    def getTrainData(self):
+       return self.__get_split('train')
+    def getTestData(self):
+       return self.__get_split('test')
+    def getValidationData(self):
+       return self.__get_split('validation')
+    def __get_split(self, name):
+        X, y = [],[]
+        for subject_state in self.split_dict[name]:
+            if self.spectrogram_dict[subject_state] != ([],[]):
+                X += [x for x in self.spectrogram_dict[subject_state][0][0]]
+                y += list(map(statistics.mean,self.spectrogram_dict[subject_state][0][1]))
+        return np.array(X), np.array(y)
+
+def getVideoSpectrograms():
+    split = pickle.load( open( "testTrainValidation.pickle", "rb" ))
+    spectrograms  = pickle.load( open( "results.pickle", "rb" ), encoding='latin1' )
+    return VideoSpectrograms(spectrograms, split)
 
 class NormalizedSubjectSplitSpectrograms:
     __trainSizeReduction = 0.75
