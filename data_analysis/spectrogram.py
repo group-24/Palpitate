@@ -357,11 +357,11 @@ class VideoSpectrograms:
        return self.__get_split('test')
     def getValidationData(self):
        return self.__get_split('validation')
-    def __get_split(self, name):
+    def __get_split(self, name, chanel=0):
         X, y = [],[]
         for subject_state in self.split_dict[name]:
             if self.spectrogram_dict[subject_state] != ([],[]):
-                X += [[x] for x in self.spectrogram_dict[subject_state][0][0]]
+                X += [[x] for x in self.spectrogram_dict[subject_state][0][chanel]]
                 y += list(map(statistics.mean,self.spectrogram_dict[subject_state][0][1]))
         return np.array(X), np.array(y)
 
