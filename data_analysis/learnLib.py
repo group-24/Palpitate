@@ -1,6 +1,6 @@
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, Flatten, TimeDistributedDense, Reshape, Permute
-from keras.layers.convolutional import Convolution2D, MaxPooling2D
+from keras.layers.convolutional import Convolution2D, MaxPooling2D, Convolution1D
 from keras.layers.recurrent import LSTM, GRU, SimpleDeepRNN
 from keras.layers.noise import GaussianNoise
 from keras.regularizers import l2
@@ -47,9 +47,8 @@ def get_2_layer_MLP_model(in_shape, nb_hidden=50, drop1=0.1):
 
 def assess_2dmodel(model, X_test, Y_test):
     predictions = model.predict(X_test)
-    minDim = min(Y_test.shape[1], predictions.shape[1])
-    r = pearsonr(np.mean(predictions[:,0:minDim,0],axis=0), np.mean(Y_test[:,0:minDim,0],axis=0))
-    rmse = sqrt(mean_squared_error(predictions[:,0:minDim,0], Y_test[:,0:minDim,0]))
+    r = pearsonr(np.mean(predictions[:,:,0],axis=1), np.mean(Y_test[:,:,0],axis=1))
+    rmse = sqrt(mean_squared_error(predictions[:,:,0], Y_test[:,:,0]))
     return r, rmse, predictions
 
 def assess_model(model, X_test, Y_test):
@@ -128,10 +127,10 @@ class RandomCnnRnnParameters():
         self.__cnt += 1
         if self.__cnt > 100:
             raise StopIteration
-        return  random.randrange(16,128,2), \
-                random.randrange(2,4,2), \
-                random.randrange(32,512,6), \
-                random.randrange(5,8,2), \
+        return  random.randrange(16,64,2), \
+                random.randrange(4,10,2), \
+                random.randrange(32,128,6), \
+                random.randrange(8,20,2), \
                 random.randrange(50,300,30), \
                 random.uniform(0.3,0.7), \
                 random.uniform(0.3,0.7)
@@ -172,3 +171,36 @@ def get_CNN_RNN_model(in_shape, nb_filters1 = 32,nb_col1=5,
 
     model.compile(loss='mse', optimizer='adam')
     return model
+
+
+def get_1DCNN_RNN_model(in_shape, nb_filters1 = 32,nb_col1=5,
+                                nb_filters2 = 64,nb_col2=10,
+                                ltsm_out_dim = 256, drop1=0.5, drop2=0.5):
+    model = Sequential()
+
+    model.add(GaussianNoise(0.01, input_shape=in_shape))
+
+    model.add(Convolution2D(nb_filters1,1,nb_col1, W_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D((1,2)))
+    model.add(Dropout(drop2))
+
+    model.add(Convolution2D(nb_filters2,1, nb_col2,W_regularizer=l2(0.01)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D((1,2)))
+    model.add(Dropout(drop2))
+
+    shape = model.layers[-1].input_shape
+    model.add(Reshape(dims=(shape[1],shape[3])))
+    #shape (32,68)
+    model.add(Permute((2,1)))
+    model.add(LSTM(ltsm_out_dim,return_sequences=True))
+    model.add(Dropout(drop1))
+
+    model.add(TimeDistributedDense(1, W_regularizer=l2(0.05)))
+    model.add(Activation('linear'))
+    shape = model.layers[-1].input_shape
+    print("Model output " + str(model.layers[-1].input_shape))
+
+    model.compile(loss='mse', optimizer='adam')
+    return model, shape[1]

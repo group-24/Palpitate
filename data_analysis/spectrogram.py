@@ -309,8 +309,8 @@ class NormalizedSpectrograms:
     def getTrainData(self):
         (X_train, y_train) = self.spectrograms.getTrainData()
 
-        X_train = X_train[y_train < 140]
-        y_train = y_train[y_train < 140]
+#        X_train = X_train[y_train < 140]
+#        y_train = y_train[y_train < 140]
 
         self.__getMeanAndSd()
         #normalize spectrograms
@@ -339,12 +339,12 @@ class NormalizedSpectrograms:
 
         return X_test, Y_test
     def getValidationData(self):
-        (X_test, y_test) = self.spectrograms.getTestData()
+        (X_val, y_val) = self.spectrograms.getValidationData()
         self.__getMeanAndSd()
-        X_test -= self.__mean
-        X_test /= (self.__sd)
-        Y_test = np.array(list(map(self.normalize_bpm, y_test)))
-        return X_test, Y_test
+        X_val -= self.__mean
+        X_val /= (self.__sd)
+        Y_val = np.array(list(map(self.normalize_bpm, y_val)))
+        return X_val, Y_val
 
 
 class VideoSpectrograms:
@@ -357,12 +357,14 @@ class VideoSpectrograms:
        return self.__get_split('test')
     def getValidationData(self):
        return self.__get_split('validation')
-    def __get_split(self, name, chanel=0):
-        X, y = [],[]
+    def __get_split(self, name, chanel=2):
+        X = []
         for subject_state in self.split_dict[name]:
             if self.spectrogram_dict[subject_state] != ([],[]):
-                X += [[x] for x in self.spectrogram_dict[subject_state][0][chanel]]
-                y += list(map(statistics.mean,self.spectrogram_dict[subject_state][0][1]))
+                X += list(zip([np.array(x) for x in self.spectrogram_dict[subject_state][0][chanel]],
+                              [x for x in self.spectrogram_dict[subject_state][0][1]]))
+        X = list(filter(lambda x: x[0].shape[0] == 120, X))
+        X, y = map(list, zip(*X))
         return np.array(X), np.array(y)
 
 def getVideoSpectrograms():
