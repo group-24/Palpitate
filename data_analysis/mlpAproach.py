@@ -1,4 +1,4 @@
-from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms
+from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms, NormalizedSubjectSplitSpectrograms
 from get_heartrates import get_interesting_heartrates
 from keras.callbacks import EarlyStopping
 from kbhit import KBHit
@@ -11,9 +11,10 @@ import learnLib
 kb = KBHit()
 #(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-ns = NormalizedSpectrograms()
+ns = NormalizedSubjectSplitSpectrograms()
 
-(X_train, Y_train) , valTuple = ns.getTrainAndValidationData()
+(X_train, Y_train) = ns.getTrainData()
+valTuple = ns.getValidationData()
 
 print(X_train.shape)
 
