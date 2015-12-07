@@ -63,6 +63,13 @@ learnLib.printModels(models)
 
 r, rmse, preds = learnLib.assess_model(maxModel, X_test, Y_test)
 predicted_bpm = np.array(list(map(ns.unnormalize_bpm, preds)))
+test_bpm = np.array(list(map(ns.unnormalize_bpm, Y_test)))
+
+val_bpm = np.array(list(map(ns.unnormalize_bpm, Y_val)))
+_, _, preds = learnLib.assess_model(maxModel, X_val, Y_val)
+val_predicted_bpm = np.array(list(map(ns.unnormalize_bpm, preds)))
+
+
 print("Model r: ", r)
 print("Model rmse: ", rmse)
 code.interact(local=locals())

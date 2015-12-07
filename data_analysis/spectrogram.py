@@ -450,6 +450,12 @@ class NormalizedSubjectSplitSpectrograms:
     def getTestData(self):
         (X_test, y_test) = readH5FileTest(self.__h5file__)
 
+        X_test = np.array(X_test)
+        y_test = np.array(y_test)
+
+        X_test = X_test[y_test < 140]
+        y_test = y_test[y_test < 140]
+
         X_test -= self.__mean
         X_test /= (self.__sd)
 
@@ -464,6 +470,8 @@ class NormalizedSubjectSplitSpectrograms:
 
         X = np.array(X)
         y = np.array(y)
+        X = X[y < 140]
+        y = y[y < 140]
 
         rnd = np.random.rand(y.shape[0])
         print(rnd.shape)

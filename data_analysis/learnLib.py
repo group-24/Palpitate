@@ -1,6 +1,6 @@
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, Flatten, TimeDistributedDense, Reshape, Permute
-from keras.layers.convolutional import Convolution2D, MaxPooling2D
+from keras.layers.convolutional import Convolution2D, MaxPooling2D, Convolution1D
 from keras.layers.recurrent import LSTM, GRU, SimpleDeepRNN
 from keras.layers.noise import GaussianNoise
 from keras.regularizers import l2
@@ -24,7 +24,7 @@ class RandomMlpParameters():
         self.__cnt += 1
         if self.__cnt > 100:
             raise StopIteration
-        return random.randrange(100,1000,500), random.uniform(0.2,0.8)
+        return random.randrange(10,1000,50), random.uniform(0.2,0.8)
 
 def printModels(models):
     for key, value in models.items():
@@ -45,11 +45,19 @@ def get_2_layer_MLP_model(in_shape, nb_hidden=50, drop1=0.1):
     model.compile(loss='mse', optimizer='adam')
     return model
 
+def assess_2dmodel(model, X_test, Y_test):
+    predictions = model.predict(X_test)
+    r = pearsonr(np.mean(predictions[:,:,0],axis=1), np.mean(Y_test[:,:,0],axis=1))
+    rmse = sqrt(mean_squared_error(predictions[:,:,0], Y_test[:,:,0]))
+    return r, rmse, predictions
+
 def assess_model(model, X_test, Y_test):
     predictions = model.predict(X_test)
     r = pearsonr(predictions[:,0], Y_test)
     rmse = sqrt(mean_squared_error(predictions, Y_test))
     return r, rmse, predictions
+
+
 
 def shuffle_in_unison(a, b):
     rng_state = np.random.get_state()
@@ -81,7 +89,7 @@ def get_RNN_model(in_shape,td_num=512, ltsm_out_dim = 256,nb_hidden=100, drop1=0
     model.add(GaussianNoise(0.05, input_shape=in_shape))
     model.add(LSTM(ltsm_out_dim, return_sequences=True))
     reg = l2(0.05)
-    model.add(TimeDistributedDense(td_num, W_regularizer=l2(0.03)))
+    #model.add(TimeDistributedDense(td_num, W_regularizer=l2(0.03)))
     #reg.set_param(model.layers[3].get_params()[0][0])
     #model.layers[3].regularizers = [reg]
     model.add(Dropout(drop1))
@@ -106,6 +114,12 @@ def get_RNN_model(in_shape,td_num=512, ltsm_out_dim = 256,nb_hidden=100, drop1=0
     return model
 
 
+def plotR(predicted_bpm, test_bpm):
+    import matplotlib.pyplot as plt
+    n = predicted_bpm.shape[0]
+    xs = range(0,n)
+    plt.plot(xs, predicted_bpm, 'r--', xs, test_bpm, 'bs')
+    plt.show()
 
 class RandomCnnRnnParameters():
     def __init__(self):
