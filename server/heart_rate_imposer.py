@@ -67,6 +67,7 @@ class HeartRateImposer(object):
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
     fps = cap.get(cv2.CAP_PROP_FPS)
+    sys.stdout.write(str(w) + " " + str(h) + " " + str(fps) + '\n')
 
     frame_count = 0
     heartrate = None
@@ -152,3 +153,11 @@ if __name__ == "__main__":
 
     hri = HeartRateImposer(video_file, opencv_path)
     hri.pipe_heartrate_frames()
+
+
+
+
+
+
+
+
