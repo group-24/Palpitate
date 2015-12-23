@@ -1,7 +1,6 @@
 CURRENT=`pwd`
 
-#SERVER=/home/app.py
-SERVER=/home/app2.py
+SERVER=/home/app.py
 
 CONTAINER_VIDEO=/home/server/Bill_Clinton.avi
 CONTAINER_OPENCV=/opencv/
