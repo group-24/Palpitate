@@ -1,10 +1,9 @@
 CURRENT=`pwd`
 
 SERVER=/home/app.py
+
 CONTAINER_VIDEO=/home/server/Bill_Clinton.avi
 CONTAINER_OPENCV=/opencv/
-
-#
 
 if [ "$1" = "test" ]
     then
