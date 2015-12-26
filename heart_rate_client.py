@@ -19,9 +19,6 @@ def gen_data_mq(video_file):
                 break
 
             sys.stdout.write(msg)
-            
-            with open('client_data.txt', 'w') as f:
-                f.write(msg)
 
     socket.close()
     context.term()
