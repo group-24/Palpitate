@@ -9,14 +9,6 @@ video_file = sys.argv[1]
 def index():
     return 'Hello World'
 
-@app.route('/diff')
-def diff():
-    file1 = "client_data.txt"
-    file2 = "server_data.txt"
-
-    diff = difflib.ndiff(open(file1).readlines(),open(file2).readlines())
-    return ''.join(diff),
-
 @app.route('/video')
 def video():
     print "Video request"
