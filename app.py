@@ -1,24 +1,34 @@
 from flask import Flask, request, Response, abort, send_file, jsonify
-import os, subprocess, re, sys
+import os, subprocess, re, sys, difflib
 
 app = Flask(__name__)
 
 video_file = sys.argv[1]
-opencv_path = sys.argv[2]
 
 @app.route('/')
 def index():
     return 'Hello World'
 
+@app.route('/diff')
+def diff():
+    file1 = "client_data.txt"
+    file2 = "server_data.txt"
+
+    diff = difflib.ndiff(open(file1).readlines(),open(file2).readlines())
+    return ''.join(diff),
+
 @app.route('/video')
 def video():
+    print "Video request"
+
     FNULL = open(os.devnull, 'w')
 
-    hri_cmd = ['python', 'heart_rate_deamon.py', video_file, opencv_path]
-    opencv_ps = subprocess.Popen(hri_cmd, stdout=subprocess.PIPE, stderr=FNULL)
+    client_proc_cmd = 'python heart_rate_client.py ' + video_file  
+    client_proc = subprocess.Popen(client_proc_cmd.split(' '), stdout=subprocess.PIPE)
 
-    line = opencv_ps.stdout.readline()
-    [width, height, fps] = line.split(' ')
+    header = client_proc.stdout.readline()
+    print header
+    [width, height, fps] = header.split(' ')
 
     cmd = 'ffmpeg -f rawvideo -pix_fmt bgr24 -s WIDTHxHEIGHT -r 30 -i - -f ogg -an -qscale:v 10 pipe:1'
     cmd = cmd.replace('WIDTH', width).replace('HEIGHT', height)
@@ -27,7 +37,7 @@ def video():
     # lets you skip forward
     start = request.args.get("start") or 0
     def generate():
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=opencv_ps.stdout)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=client_proc.stdout)
         try:
             f = proc.stdout
             byte = f.read(512)
