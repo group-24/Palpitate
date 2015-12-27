@@ -21,6 +21,7 @@ class HeartRateImposer(object):
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
     fps = cap.get(cv2.CAP_PROP_FPS)
+    yield str(w) + " " + str(h) + " " + str(fps) + '\n'
 
     frame_count = 0
     heartrate = None
@@ -52,8 +53,7 @@ class HeartRateImposer(object):
         cv2.putText(frame, str(heartrate_text) + ' bpm', (x+(w*1)/4, y+h+20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
 
-      ret, jpeg = cv2.imencode('.jpg', frame)
-      yield jpeg.tobytes()
+      yield frame.tostring()
 
     cap.release()
     cv2.destroyAllWindows()
@@ -103,8 +103,4 @@ class HeartRateImposer(object):
 
     cap.release()
     cv2.destroyAllWindows()
-
-  def impose_heartrate(self, to_file):
-    self._add_face_detection(to_file)
-    self._copy_audio(self.from_file, to_file)
 
