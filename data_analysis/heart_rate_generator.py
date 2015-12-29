@@ -5,10 +5,8 @@ import numpy as np
 import os
 
 pwd = '/home/'
-print 'Loading model'
 model = model_from_json(open(pwd + 'data_analysis/my_model_architecture18%.json').read())
 model.load_weights(pwd + 'data_analysis/my_model_weights18%.h5')
-print 'Loaded model'
 
 class HeartRateGenerator(object):
 
@@ -21,7 +19,7 @@ class HeartRateGenerator(object):
             subprocess.call(['ffmpeg', '-y', '-i', str(self.avi_file), '-ab', '160k', '-ac', '2', '-ar', '44100', '-vn', str(self.wav_file)])
         else:
             raise Exception()
-            
+
         self.model = model
         self.subjectWav = SubjectWav(str(self.wav_file))
 

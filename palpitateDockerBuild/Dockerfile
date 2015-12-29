@@ -24,6 +24,7 @@ run /usr/bin/yes | pip install --upgrade scipy
 
 run pip install tables
 run pip install sklearn
+run pip install pyzmq
 
 WORKDIR /home
 
