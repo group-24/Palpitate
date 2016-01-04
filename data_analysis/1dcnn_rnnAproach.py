@@ -178,7 +178,7 @@ Y_test = np.array(list(map(lambda x: interpolateYs(x, maxModelOutShape), Y_t)))
 learnLib.printModels(models)
 
 r, rmse, preds = learnLib.assess_2dmodel(maxModel, X_test, Y_test)
-predicted_bpm = np.array(list(map(ns.unnormalize_bpm, preds)))
+predicted_bpm = np.array(list(map(ns.normalizer.unnormalize_bpm, preds)))
 print("Model r: ", r)
 print("Model rmse: ", rmse)
 code.interact(local=locals())
