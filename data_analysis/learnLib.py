@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, Flatten, TimeDistributedDense, Reshape, Permute
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, Convolution1D
-from keras.layers.recurrent import LSTM, GRU, SimpleDeepRNN
+from keras.layers.recurrent import LSTM, GRU
 from keras.layers.noise import GaussianNoise
 from keras.regularizers import l2
 from keras.callbacks import EarlyStopping

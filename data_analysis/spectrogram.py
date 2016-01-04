@@ -285,26 +285,36 @@ def readH5FileTest(h5file):
 def readH5FileValidate(h5file):
     return h5file.root.X_validate , h5file.root.Y_validate
 
-class NormalizedSpectrograms:
+
+class Normalizer:
     def __init__(self, spectrograms):
-        self.spectrograms = spectrograms
-        self.__mean = None
-        self.__sd = None
-        self.__y_mean = None
-        self.__y_sd = None
+       X, y = spectrograms.getTrainData()
+       self.__mean = np.average(X,0)
+       self.__sd = np.std(X, 0)
+       self.__y_mean = np.average(y)
+       self.__y_sd = np.std(y)
+       print(self.__mean.shape)
+       print(self.__y_mean,self.__y_sd)
+
     def normalize_bpm(self, bpm):
         return (bpm - self.__y_mean) / (self.__y_sd)
 
     def unnormalize_bpm(self, bpm):
         return (bpm * self.__y_sd) + self.__y_mean
 
-    def __getMeanAndSd(self):
-        if(self.__mean is None):
-            X, y = self.spectrograms.getTrainData()
-            self.__mean = np.average(X,0)
-            self.__sd = np.std(X, 0)
-            self.__y_mean = np.average(y)
-            self.__y_sd = np.std(y)
+    def normalize_data(self, X):
+        X -= self.__mean
+        X /= (self.__sd)
+        return X
+
+
+
+
+
+class NormalizedSpectrograms:
+    def __init__(self, spectrograms):
+        self.spectrograms = spectrograms
+        self.normalizer = Normalizer(spectrograms)
 
     def getTrainData(self):
         (X_train, y_train) = self.spectrograms.getTrainData()
@@ -312,38 +322,29 @@ class NormalizedSpectrograms:
 #        X_train = X_train[y_train < 140]
 #        y_train = y_train[y_train < 140]
 
-        self.__getMeanAndSd()
         #normalize spectrograms
-        print(self.__mean.shape)
-        X_train -= self.__mean
-        X_train /= (self.__sd)
+        X_train = self.normalizer.normalize_data(X_train)
 
-        #normalize bpms
-        print(self.__y_mean,self.__y_sd)
 
         #shuffle everything
         #learnLib.shuffle_in_unison(X_train, y_train)
 
-        Y_train = np.array(list(map(self.normalize_bpm, y_train)))
+        #normalize bpms
+        Y_train = np.array(list(map(self.normalizer.normalize_bpm, y_train)))
 
         return (X_train, Y_train)
 
     def getTestData(self):
         (X_test, y_test) = self.spectrograms.getTestData()
-        self.__getMeanAndSd()
+        X_test = self.normalizer.normalize_data(X_test)
 
-        X_test -= self.__mean
-        X_test /= (self.__sd)
-
-        Y_test = np.array(list(map(self.normalize_bpm, y_test)))
+        Y_test = np.array(list(map(self.normalizer.normalize_bpm, y_test)))
 
         return X_test, Y_test
     def getValidationData(self):
         (X_val, y_val) = self.spectrograms.getValidationData()
-        self.__getMeanAndSd()
-        X_val -= self.__mean
-        X_val /= (self.__sd)
-        Y_val = np.array(list(map(self.normalize_bpm, y_val)))
+        X_val = self.normalizer.normalize_data(X_val)
+        Y_val = np.array(list(map(self.normalizer.normalize_bpm, y_val)))
         return X_val, Y_val
 
 
