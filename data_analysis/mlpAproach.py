@@ -1,4 +1,4 @@
-from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms
+from spectrogram import full_bpm_to_data, HEART_AV_ROOT, NormalizedSpectrograms, NormalizedSubjectSplitSpectrograms, getVideoSpectrograms
 from get_heartrates import get_interesting_heartrates
 from keras.callbacks import EarlyStopping
 from kbhit import KBHit
@@ -11,9 +11,11 @@ import learnLib
 kb = KBHit()
 #(X_train, y_train), (X_test, y_test) = full_bpm_to_data(get_interesting_heartrates(HEART_AV_ROOT))
 
-ns = NormalizedSpectrograms()
+#ns = NormalizedSubjectSplitSpectrograms()
+ns = NormalizedSpectrograms(getVideoSpectrograms())
 
-(X_train, Y_train) , valTuple = ns.getTrainAndValidationData()
+(X_train, Y_train) = ns.getTrainData()
+valTuple = ns.getValidationData()
 
 print(X_train.shape)
 
@@ -29,8 +31,8 @@ X_validate, Y_validate = valTuple
 for args in learnLib.RandomMlpParameters(): #itertools.product(nb_hiddens, drop1s):
     print("Model: ", args)
     model = learnLib.get_2_layer_MLP_model(X_train[0].shape, *args)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=10,
+    early_stopping = EarlyStopping(monitor='val_loss', patience=15)
+    history = model.fit(X_train, Y_train, batch_size=100, nb_epoch=100,
             verbose=1, validation_data=valTuple, callbacks=[early_stopping])
 
 

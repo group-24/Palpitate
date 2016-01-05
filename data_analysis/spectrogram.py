@@ -1,9 +1,10 @@
-import numpy as np
+import statistics
 import os
 from scipy.io import wavfile
+from get_heartrates import get_interesting_heartrates
 from scipy import signal
 from get_heartrates import check_cache, write_cache
-from keras.utils.io_utils import HDF5Matrix
+#from keras.utils.io_utils import HDF5Matrix
 
 import re
 import random
@@ -11,6 +12,9 @@ import code
 import errno
 import subprocess as sp
 import learnLib
+import tables as tb
+import pickle
+import numpy as np
 
 """
 Change this according to your local settings
@@ -278,44 +282,154 @@ def readH5FileTrain(h5file):
 def readH5FileTest(h5file):
     return h5file.root.X_test , h5file.root.Y_test
 
+def readH5FileValidate(h5file):
+    return h5file.root.X_validate , h5file.root.Y_validate
+
+
+class Normalizer:
+    def __init__(self, spectrograms):
+       X, y = spectrograms.getTrainData()
+       self.__mean = np.average(X,0)
+       self.__sd = np.std(X, 0)
+       self.__y_mean = np.average(y)
+       self.__y_sd = np.std(y)
+       print(self.__mean.shape)
+       print(self.__y_mean,self.__y_sd)
+
+    def normalize_bpm(self, bpm):
+        return (bpm - self.__y_mean) / (self.__y_sd)
+
+    def unnormalize_bpm(self, bpm):
+        return (bpm * self.__y_sd) + self.__y_mean
+
+    def normalize_data(self, X):
+        X -= self.__mean
+        X /= (self.__sd)
+        return X
+
+
+
+
+
 class NormalizedSpectrograms:
+    def __init__(self, spectrograms):
+        self.spectrograms = spectrograms
+        self.normalizer = Normalizer(spectrograms)
+
+    def getTrainData(self):
+        (X_train, y_train) = self.spectrograms.getTrainData()
+
+#        X_train = X_train[y_train < 140]
+#        y_train = y_train[y_train < 140]
+
+        #normalize spectrograms
+        X_train = self.normalizer.normalize_data(X_train)
+
+
+        #shuffle everything
+        #learnLib.shuffle_in_unison(X_train, y_train)
+
+        #normalize bpms
+        Y_train = np.array(list(map(self.normalizer.normalize_bpm, y_train)))
+
+        return (X_train, Y_train)
+
+    def getTestData(self):
+        (X_test, y_test) = self.spectrograms.getTestData()
+        X_test = self.normalizer.normalize_data(X_test)
+
+        Y_test = np.array(list(map(self.normalizer.normalize_bpm, y_test)))
+
+        return X_test, Y_test
+    def getValidationData(self):
+        (X_val, y_val) = self.spectrograms.getValidationData()
+        X_val = self.normalizer.normalize_data(X_val)
+        Y_val = np.array(list(map(self.normalizer.normalize_bpm, y_val)))
+        return X_val, Y_val
+
+
+class VideoSpectrograms:
+    def __init__(self, spectrogram_dict, split_dict):
+        self.spectrogram_dict = spectrogram_dict
+        self.split_dict = split_dict
+    def getTrainData(self):
+       return self.__get_split('train')
+    def getTestData(self):
+       return self.__get_split('test')
+    def getValidationData(self):
+       return self.__get_split('validation')
+    def __get_split(self, name, chanel=2):
+        X = []
+        for subject_state in self.split_dict[name]:
+            if self.spectrogram_dict[subject_state] != ([],[]):
+                X += list(zip([np.array(x) for x in self.spectrogram_dict[subject_state][0][chanel]],
+                              [x for x in self.spectrogram_dict[subject_state][0][1]]))
+        X = list(filter(lambda x: x[0].shape[0] == 120, X))
+        X, y = map(list, zip(*X))
+        return np.array(X), np.array(y)
+
+def getVideoSpectrograms():
+    split = pickle.load( open( "testTrainValidation.pickle", "rb" ))
+    spectrograms  = pickle.load( open( "results.pickle", "rb" ), encoding='latin1' )
+    return VideoSpectrograms(spectrograms, split)
+
+class NormalizedSubjectSplitSpectrograms:
     __trainSizeReduction = 0.75
-    def __init__(self):
+    def __init__(self, subjectIdependant=True):
         try:
-            self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_CACHE, mode='r')
+            self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_BY_SUBJECT_CACHE, mode='r')
         except IOError:
             #todo, needs to regenerate the cache
+            generate_per_subject_cache(get_interesting_heartrates(HEART_AV_ROOT))
+            self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_BY_SUBJECT_CACHE, mode='r')
             pass
+        self.__subjectIdependant = subjectIdependant
         self.__mean = None
         self.__sd = None
         self.__y_mean = None
         self.__y_sd = None
 
     def normalize_bpm(self, bpm):
-        return (bpm - self.__y_mean) / self.__y_sd
+        return (bpm - self.__y_mean) / (self.__y_sd)
 
     def unnormalize_bpm(self, bpm):
         return (bpm * self.__y_sd) + self.__y_mean
 
     def __getMeanAndSd(self, X, y):
         if(self.__mean is None):
-            self.__mean = np.average(X,0)
-            self.__sd = np.std(X, 0)
+            self.__mean = np.mean(X,(0,1), keepdims=True)
+            self.__sd = np.std(X, (0,1), keepdims=True)
             self.__y_mean = np.average(y)
             self.__y_sd = np.std(y)
 
-    def getTrainAndValidationData(self, validation_split=7):
+    def getTrainData(self, validation_split=7):
         (X_train, y_train) = readH5FileTrain(self.__h5file__)
 
         #so it fits into memory without paging
-        reduce_to = int(X_train.shape[0] * NormalizedSpectrograms.__trainSizeReduction)
+        reduce_to = int(X_train.shape[0] * NormalizedSubjectSplitSpectrograms.__trainSizeReduction)
         X_train = X_train[:reduce_to]
         y_train = y_train[:reduce_to]
 
+        if not self.__subjectIdependant:
+            (X, y) = readH5FileValidate(self.__h5file__)
+            y_train = np.concatenate([y_train, y],0)
+            X_train = np.concatenate([X_train, X],0)
+
+        X_train = np.array(X_train)
+        y_train = np.array(y_train)
+        print(X_train.shape)
+        rnd = np.random.rand(y_train.shape[0])
+        X_train = X_train[rnd > 0.8]
+        y_train = y_train[rnd > 0.8]
+
+        X_train = X_train[y_train < 140]
+        y_train = y_train[y_train < 140]
+        print(X_train.shape)
+
         self.__getMeanAndSd(X_train, y_train)
         #normalize spectrograms
-        X_train = np.subtract(X_train, self.__mean)
-        X_train = np.divide(X_train, self.__sd)
+        X_train -= self.__mean
+        X_train /= (self.__sd)
 
         #normalize bpms
         print(self.__y_mean,self.__y_sd)
@@ -323,26 +437,50 @@ class NormalizedSpectrograms:
         #shuffle everything
         learnLib.shuffle_in_unison(X_train, y_train)
 
-        split_at = X_train.shape[0] // validation_split
+        if not self.__subjectIdependant:
+            split_at = X_train.shape[0] // 4
 
-        X_validate = X_train[:split_at]
-        Y_validate = np.array(list(map(self.normalize_bpm, y_train[:split_at])))
+            self.X_validate = X_train[:split_at]
+            self.Y_validate = np.array(list(map(self.normalize_bpm, y_train[:split_at])))
 
-        Y_train = np.array(list(map(self.normalize_bpm, y_train[split_at:])))
-        X_train = (X_train[split_at:])
+            y_train = y_train[split_at:]
+            X_train = (X_train[split_at:])
 
-        return (X_train, Y_train), (X_validate, Y_validate)
+
+        Y_train = np.array(list(map(self.normalize_bpm, y_train)))
+        return X_train, Y_train
 
     def getTestData(self):
         (X_test, y_test) = readH5FileTest(self.__h5file__)
-        self.__getMeanAndSd(X_test, y_test)
 
-        X_test = np.subtract(X_test, self.__mean)
-        X_test = np.divide(X_test, self.__sd)
+        X_test -= self.__mean
+        X_test /= (self.__sd)
 
         Y_test = np.array(list(map(self.normalize_bpm, y_test)))
 
         return X_test, Y_test
+
+    def getValidationData(self):
+        if not self.__subjectIdependant:
+            return self.X_validate, self.Y_validate
+        (X, y) = readH5FileValidate(self.__h5file__)
+
+        X = np.array(X)
+        y = np.array(y)
+
+        rnd = np.random.rand(y.shape[0])
+        print(rnd.shape)
+        print(X.shape)
+#        X = X[rnd > 0.9]
+#        y = y[rnd > 0.9]
+
+
+        X  -= self.__mean
+        X  /= (self.__sd)
+
+        Y  = np.array(list(map(self.normalize_bpm, y)))
+
+        return X, Y
 
 
 def make_sure_path_exists(path):
@@ -353,13 +491,84 @@ def make_sure_path_exists(path):
             raise
 
 
+
+FULL_SPECTROGRAM_BY_SUBJECT_CACHE = "all_spectrograms_by_subjects.h5"
+def generate_per_subject_cache(xls_data, test_split=0.3, validation_split=0.3):
+    prevElem = None
+    h5file = tb.openFile(FULL_SPECTROGRAM_BY_SUBJECT_CACHE, mode='w', title="All the data")
+    root = h5file.root
+    first = True
+    X_train = None
+    Y_train = None
+    X_validate = None
+    Y_validate = None
+    X_test = None
+    Y_test = None
+    y_append = None
+    X_append = None
+    for ss_id, regions_of_interest in xls_data.items():
+        avi = maybe_get_unique_avi_from_subjectState_id(ss_id)
+        if avi:
+            #split the subjects into vlaidation, train and test sets
+            ran_num = random.uniform(0,1)
+            if ran_num < test_split:
+                X_append, y_append = X_test, Y_test
+            elif ran_num < test_split +  validation_split:
+                X_append, y_append = X_validate, Y_validate
+            else:
+                X_append, y_append = X_train, Y_train
+            sw = SubjectVideo(avi)
+            for _,timestamp,bpm in regions_of_interest:
+                #reduces the memory used - for testing
+                #if random.uniform(0,1) < 0.9:
+                #     continue
+                timestamp = int(timestamp)
+                bpm = round(float(bpm))
+                try:
+                    _,_,Sxx0 = sw.get_spectrogram(timestamp,4)
+                #workaround this error
+                #    max_freq_idx = int((max_freqency / f[-1]) * Sxx.shape[0])
+                #IndexError: index -1 is out of bounds for axis 0 with size 0
+                except IndexError:
+                    print("Something went wrong for avi, timestamp ", avi, timestamp)
+                    continue
+                elem = np.array([Sxx0])
+                if prevElem is not None and elem.shape != prevElem.shape:
+                    print("skipping " + str(avi) + " " + ss_id +
+                            " due to incorrect shape")
+                    continue
+                prevElem = elem
+                #store the elem to disk
+                if first:
+                    first = False
+                    a = tb.Atom.from_dtype(np.dtype('Float32'))
+                    data_shape = tuple([0] + list(elem.shape))
+                    X_train = h5file.create_earray(root,'X_train',a,data_shape ,"X_train")
+                    X_test = h5file.create_earray(root,'X_test',a, data_shape,"X_test")
+                    X_validate = h5file.create_earray(root,'X_validate',a, data_shape,"X_validate")
+                    Y_train = h5file.create_earray(root,'Y_train',tb.IntAtom(), (0,),"Y_train")
+                    Y_test = h5file.create_earray(root,'Y_test',tb.IntAtom(), (0,),"Y_test")
+                    Y_validate = h5file.create_earray(root,'Y_validate',tb.IntAtom(), (0,),"Y_validate")
+                    X_append, y_append = X_test, Y_test
+                X_append.append(np.array([elem]))
+                y_append.append([bpm])
+            h5file.flush()
+            print("converted " + str(avi) +  " for " + X_append.title + " set")
+        else:
+            print("Skipping " + ss_id + " becuase it isn't unique")
+    h5file.close()
+
+
+
 if __name__ == "__main__":
-    sw = None
-    for p in iterateThroughWav():
-        v = p.replace(".wav",".avi")
-        print(v)
-        sw = SubjectVideo(v)
-    plotSubjectWav(sw, 31*60+17)
+    generate_per_subject_cache(get_interesting_heartrates(HEART_AV_ROOT))
+
+#    sw = None
+#    for p in iterateThroughWav():
+#        v = p.replace(".wav",".avi")
+#        print(v)
+#        sw = SubjectVideo(v)
+#    plotSubjectWav(sw, 31*60+17)
 
 # make_sure_path_exists("dat")
 #                filename = os.path.join("dat", subjectStateId + "_" + str(timestamp))
