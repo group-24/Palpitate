@@ -1,4 +1,5 @@
 from data_analysis.heart_rate_generator import HeartRateGenerator
+from video_analysis.video_heart_rate_generator import VideoHeartrateGenerator
 import numpy as np
 import cv2
 import sys
@@ -12,6 +13,7 @@ class HeartRateImposer(object):
     self.from_file = from_file
     self.opencv_path = opencv_path
     self.hrg = HeartRateGenerator(avi_file=self.from_file)
+    self.vhrg = VideoHeartrateGenerator()
 
   def gen_heartrate_frames(self, age, gender):
     return self.heartrate_frames(age, gender, False)
@@ -30,6 +32,7 @@ class HeartRateImposer(object):
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
     fps = cap.get(cv2.CAP_PROP_FPS)
+    print "FPS" + str(fps)
 
     if pipe:
         sys.stdout.write(str(w) + " " + str(h) + " " + str(fps) + '\n')
@@ -82,11 +85,17 @@ class HeartRateImposer(object):
         # (x, y, w, h) = faces[0]
         (x, y, w, h) = face
 
+        self.vhrg.add_sample(interesting_pixels)
+        heartrate_from_vhrg = self.vhrg.get_heartrate()
 
         cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
         heartrate_text = round(heartrate, 1) if heartrate else '---'
         cv2.putText(frame, str(heartrate_text) + ' bpm', (x+(w*1)/4, y+h+20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+        vhrg_text = "FROM VIDEO: " + str(heartrate_from_vhrg)
+
+        cv2.putText(frame, vhrg_text, (50,50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 100, 255), 2)
 
         if age and gender:
             intensity = round(float(self.calculate_exercise_intensity(heartrate, mhr)), 1)

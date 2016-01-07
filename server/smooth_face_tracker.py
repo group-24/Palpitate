@@ -2,7 +2,7 @@ import cv2
 
 ALPHA_MOVEMENT = 0.7
 ALPHA_FACE_SIZE = 0.9
-FAULT_TOLERANCE = 10 # number of frames lost before it stops
+FAULT_TOLERANCE = 15 # number of frames lost before it stops
 
 class SmoothFaceTracker(object):
     """Tracks one face smoothly"""
