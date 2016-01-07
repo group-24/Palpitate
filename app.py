@@ -25,7 +25,7 @@ def video(age, gender):
     print header
     [width, height, fps] = header.split(' ')
 
-    cmd = 'ffmpeg -f rawvideo -pix_fmt bgr24 -s WIDTHxHEIGHT -r 30 -i - -f ogg -an -qscale:v 10 pipe:1'
+    cmd = 'ffmpeg -f rawvideo -pix_fmt bgr24 -s WIDTHxHEIGHT -r 30 -i - -i ' + video_file + ' -f ogg -qscale:v 10 pipe:1'
     cmd = cmd.replace('WIDTH', width).replace('HEIGHT', height)
     cmd = cmd.split(' ')
     
