@@ -4,6 +4,7 @@ import cv2
 import sys
 import subprocess
 import random
+from smooth_face_tracker import SmoothFaceTracker
 
 class HeartRateImposer(object):
 
@@ -19,8 +20,10 @@ class HeartRateImposer(object):
     self.heartrate_frames(age, gender, True)
 
   def heartrate_frames(self, age, gender, pipe):
-    face_cascade = cv2.CascadeClassifier(self.opencv_path +
-                     'data/haarcascades/haarcascade_frontalface_default.xml')
+    face_tracker = SmoothFaceTracker(self.opencv_path)
+
+    # face_cascade = cv2.CascadeClassifier(self.opencv_path +
+                    #  'data/haarcascades/haarcascade_frontalface_default.xml')
     cap = cv2.VideoCapture(self.from_file)
 
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -43,9 +46,9 @@ class HeartRateImposer(object):
     current_min = 300.0
 
     if age and gender:
-        print "Imposing medical information"
-        age = int(age)
-        mhr = round(float(self.calculate_max_heartrate(age, gender)), 1)
+      print "Imposing medical information"
+      age = int(age)
+      mhr = round(float(self.calculate_max_heartrate(age, gender)), 1)
 
     while True:
       # Read frame from video capture
@@ -63,16 +66,23 @@ class HeartRateImposer(object):
           heartrate = heartrate_gen.next()
           heartrate_time = time
 
-      if heartrate > 0: 
+      if heartrate > 0:
           if heartrate > current_max:
              current_max = heartrate
           elif heartrate < current_min:
              current_min = heartrate
 
-      gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-      faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    #   gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #   faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
-      for (x,y,w,h) in faces:
+      face, interesting_pixels = face_tracker.detect_face(frame)
+
+    #   if len(faces) == 1:
+      if face is not None:
+        # (x, y, w, h) = faces[0]
+        (x, y, w, h) = face
+
+
         cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
         heartrate_text = round(heartrate, 1) if heartrate else '---'
         cv2.putText(frame, str(heartrate_text) + ' bpm', (x+(w*1)/4, y+h+20),
@@ -105,7 +115,7 @@ class HeartRateImposer(object):
     cv2.destroyAllWindows()
 
   def calculate_max_heartrate(self, age, gender):
-    if gender == 'male': 
+    if gender == 'male':
         return 203.7 / (1 + pow(2.718282, 0.033 * (age - 104.3)))
     else:
         return 190.2 / (1 + pow(2.718282, 0.0453 * (age - 107.5)))
@@ -114,4 +124,3 @@ class HeartRateImposer(object):
     if heartrate:
       return heartrate / max_heartrate
     return -1
-
