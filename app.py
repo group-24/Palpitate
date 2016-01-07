@@ -9,20 +9,23 @@ video_file = sys.argv[1]
 def index():
     return 'Hello World'
 
-@app.route('/video')
-def video():
+@app.route('/stream', defaults={'age': None, 'gender': None})
+@app.route('/stream/medical/<age>/<gender>')
+def video(age, gender):
     print "Video request"
+    if age and gender:
+        print "Medical use case"
 
     FNULL = open(os.devnull, 'w')
 
-    client_proc_cmd = 'python heart_rate_client.py ' + video_file  
+    client_proc_cmd = 'python heart_rate_client.py ' + video_file  + ' ' + str(age) + ' ' + str(gender)
     client_proc = subprocess.Popen(client_proc_cmd.split(' '), stdout=subprocess.PIPE)
 
     header = client_proc.stdout.readline()
     print header
     [width, height, fps] = header.split(' ')
 
-    cmd = 'ffmpeg -f rawvideo -pix_fmt bgr24 -s WIDTHxHEIGHT -r 30 -i - -f ogg -an -qscale:v 10 pipe:1'
+    cmd = 'ffmpeg -f rawvideo -pix_fmt bgr24 -s WIDTHxHEIGHT -r 30 -i - -i ' + video_file + ' -f ogg -qscale:v 10 pipe:1'
     cmd = cmd.replace('WIDTH', width).replace('HEIGHT', height)
     cmd = cmd.split(' ')
     

@@ -1,4 +1,3 @@
-import statistics
 import os
 from scipy.io import wavfile
 from get_heartrates import get_interesting_heartrates
