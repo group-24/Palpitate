@@ -373,7 +373,7 @@ def getVideoSpectrograms():
     spectrograms  = pickle.load( open( "results.pickle", "rb" ), encoding='latin1' )
     return VideoSpectrograms(spectrograms, split)
 
-class NormalizedSubjectSplitSpectrograms:
+class SubjectSplitSpectrograms:
     __trainSizeReduction = 0.75
     def __init__(self, subjectIdependant=True):
         try:
@@ -384,29 +384,12 @@ class NormalizedSubjectSplitSpectrograms:
             self.__h5file__ =  tb.openFile(FULL_SPECTROGRAM_BY_SUBJECT_CACHE, mode='r')
             pass
         self.__subjectIdependant = subjectIdependant
-        self.__mean = None
-        self.__sd = None
-        self.__y_mean = None
-        self.__y_sd = None
-
-    def normalize_bpm(self, bpm):
-        return (bpm - self.__y_mean) / (self.__y_sd)
-
-    def unnormalize_bpm(self, bpm):
-        return (bpm * self.__y_sd) + self.__y_mean
-
-    def __getMeanAndSd(self, X, y):
-        if(self.__mean is None):
-            self.__mean = np.mean(X,(0,1), keepdims=True)
-            self.__sd = np.std(X, (0,1), keepdims=True)
-            self.__y_mean = np.average(y)
-            self.__y_sd = np.std(y)
 
     def getTrainData(self, validation_split=7):
         (X_train, y_train) = readH5FileTrain(self.__h5file__)
 
         #so it fits into memory without paging
-        reduce_to = int(X_train.shape[0] * NormalizedSubjectSplitSpectrograms.__trainSizeReduction)
+        reduce_to = int(X_train.shape[0] * SubjectSplitSpectrograms.__trainSizeReduction)
         X_train = X_train[:reduce_to]
         y_train = y_train[:reduce_to]
 
@@ -426,13 +409,6 @@ class NormalizedSubjectSplitSpectrograms:
         y_train = y_train[y_train < 140]
         print(X_train.shape)
 
-        self.__getMeanAndSd(X_train, y_train)
-        #normalize spectrograms
-        X_train -= self.__mean
-        X_train /= (self.__sd)
-
-        #normalize bpms
-        print(self.__y_mean,self.__y_sd)
 
         #shuffle everything
         learnLib.shuffle_in_unison(X_train, y_train)
@@ -441,23 +417,17 @@ class NormalizedSubjectSplitSpectrograms:
             split_at = X_train.shape[0] // 4
 
             self.X_validate = X_train[:split_at]
-            self.Y_validate = np.array(list(map(self.normalize_bpm, y_train[:split_at])))
+            self.Y_validate = np.array(y_train[:split_at])
 
             y_train = y_train[split_at:]
             X_train = (X_train[split_at:])
 
 
-        Y_train = np.array(list(map(self.normalize_bpm, y_train)))
+        Y_train = np.array(y_train)
         return X_train, Y_train
 
     def getTestData(self):
-        (X_test, y_test) = readH5FileTest(self.__h5file__)
-
-        X_test -= self.__mean
-        X_test /= (self.__sd)
-
-        Y_test = np.array(list(map(self.normalize_bpm, y_test)))
-
+        (X_test, Y_test) = readH5FileTest(self.__h5file__)
         return X_test, Y_test
 
     def getValidationData(self):
@@ -474,13 +444,7 @@ class NormalizedSubjectSplitSpectrograms:
 #        X = X[rnd > 0.9]
 #        y = y[rnd > 0.9]
 
-
-        X  -= self.__mean
-        X  /= (self.__sd)
-
-        Y  = np.array(list(map(self.normalize_bpm, y)))
-
-        return X, Y
+        return X, y
 
 
 def make_sure_path_exists(path):
