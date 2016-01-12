@@ -1,0 +1,132 @@
+body {
+	font-family: 'Roboto', sans-serif;
+    background-image: url('../images/sinoatrialnode.png');
+	color: White;
+}
+
+.container {
+    max-width: 60%;
+}
+
+.alt-container {
+	background-color: #333;
+}
+
+.video {
+	padding-top: 20%;
+}
+
+.red-text {
+	color: Red;
+}
+
+.fill { 
+    min-height: 100%;
+    height: 100vh;
+}
+
+.half-fill { 
+    min-height: 50%;
+    height: 50vh;
+}
+
+.small-fill {
+	height: 50px;
+	text-align: center;
+}
+
+.title {
+	font-weight: 400;
+	font-size: 6em;
+	text-align: center;
+}
+
+.slogan {
+	font-weight: 300;
+	font-size: 2.5em;
+}
+
+h1 {
+	padding-top: 5%;
+}
+
+.description {
+	font-weight: 300;
+	font-size: 1.2em;
+	line-height: 200%;
+}
+
+.navbar .navbar-nav {
+  	display: inline-block;
+  	float: none;
+  	vertical-align: top;
+}
+
+.navbar {
+  	text-align: right;
+}
+
+.upload {
+	color: Black;
+}
+
+.gender {
+    color: Black;
+}
+
+.age-box {
+    width: 50px;
+    color: Black;
+}
+
+.buttons {
+	text-align: center;
+}
+
+.bar {
+	background-color: #222;
+}
+
+.githubLink {
+	vertical-align: bottom;
+}
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    /*text-align: right;*/
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+
+#fileName {
+    width: 200px;
+    margin: auto;
+}
+
+.videoFrame {
+    text-align: center;
+    vertical-align: middle;
+    width: 100%;
+    height: 100%;
+    padding-top: 8%;
+}
+
+iframe {
+    width: 1280px;
+    height: 720px;
+    border: none;
+    padding: 0;
+}
