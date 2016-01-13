@@ -1,5 +1,5 @@
 from data_analysis.heart_rate_generator import HeartRateGenerator
-from video_analysis.video_heart_rate_generator import VideoHeartrateGenerator
+from data_analysis.video_heart_rate_generator import VideoHeartrateGenerator
 import numpy as np
 import cv2
 import sys
@@ -86,7 +86,7 @@ class HeartRateImposer(object):
         (x, y, w, h) = face
 
         self.vhrg.add_sample(interesting_pixels)
-        heartrate_from_vhrg = self.vhrg.get_heartrate()
+        heartrate_from_vhrg = round(self.vhrg.get_heartrate(), 1)
 
         cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
         heartrate_text = round(heartrate, 1) if heartrate else '---'
@@ -114,6 +114,8 @@ class HeartRateImposer(object):
                         (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
             cv2.putText(frame, 'Current Min. Heart Rate: ' + cmin + ' bpm',
                         (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+      else:
+        self.vhrg.lost_face()
 
       if pipe:
         sys.stdout.write(frame.tostring())
