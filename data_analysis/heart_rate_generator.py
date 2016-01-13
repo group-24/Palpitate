@@ -3,10 +3,11 @@ from data_analysis.spectrogram import SubjectWav
 import subprocess
 import numpy as np
 import os
+from normalizer import premade_audio_normalizer as normalizer
 
 pwd = '/home/'
-model = model_from_json(open(pwd + 'data_analysis/my_model_architecture18%.json').read())
-model.load_weights(pwd + 'data_analysis/my_model_weights18%.h5')
+model = model_from_json(open(pwd + 'data_analysis/my_model_architecture65%.json').read())
+model.load_weights(pwd + 'data_analysis/my_model_weights65%.h5')
 
 class HeartRateGenerator(object):
 
@@ -33,9 +34,14 @@ class HeartRateGenerator(object):
                 spectrogram = self.subjectWav.get_spectrogram(time)
                 spectrogram = spectrogram[2]
                 spectrogram = np.array([[spectrogram]])
-                heartrate = self.model.predict(spectrogram)[0][0]
-                heartrate = heartrate if str(heartrate) != 'nan' else None
+                spectrogram = normalizer.normalize_data(spectrogram)
 
+                spectrogram = sliceToTimeSeries(np.array(spectrogram))
+                heartrate = self.model.predict(spectrogram)[0][0]
+
+                heartrate = normalizer.unnormalize_bpm(heartrate)
+
+                heartrate = heartrate if str(heartrate) != 'nan' else None
                 window.append(heartrate)
                 if len(window) is 5:
                     window = window[1:]
@@ -47,3 +53,11 @@ class HeartRateGenerator(object):
             except Exception:
                 break
             time += 1
+
+
+def sliceToTimeSeries(X):
+   divisibleTime = X[:,0,:,:150]
+   slicedTime = np.reshape(divisibleTime, (-1, X.shape[2], 30, 5))
+   swappedAxes = np.swapaxes(slicedTime, 1, 2)
+   flattenLastTwo = np.reshape(swappedAxes,(X.shape[0],30 , -1))
+   return flattenLastTwo
