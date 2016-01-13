@@ -11,11 +11,11 @@ try python *.t.py
 try cd ../..
 next
 
-step "running video analysis tests"
-try cd video_analysis
-try python *.t.py
-try cd ..
-next
+# step "running video analysis tests"
+# try cd video_analysis
+# try python *.t.py
+# try cd ..
+# next
 
 # If any tests fail, this will fail Travis
 exit $ERROR_OCCURED
