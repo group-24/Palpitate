@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Palpitate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="static/css/styles.css" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700,300' rel='stylesheet' type='text/css'>
+    <link href="static/css/twemoji-awesome.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="static/js/form.js"></script>
+  </head>
+  <body>
+    <div class="container video fill" id="home">
+      <div class="title">Generate your <span class="red-text"><i class="fa fa-heartbeat"></i></span></div>
+      <div class="buttons">
+        <form action="upload" method="POST" enctype="multipart/form-data" target="videoFrame">
+          <span class="btn btn-default btn-file btn-lg">
+            <i class="fa fa-upload"></i> Upload<input type="file" name="file">
+          </span>
+          <input class="btn btn-default btn-lg" type="submit" value="Generate" disabled>
+          </br></br>
+          <div class="alert alert-info" id="fileName">No file selected</div>
+          </br>
+          <button type="button" class="btn btn-default" id="medical">Use Medical Mode</button>
+          </br></br>
+          <div class="medical-info">
+            Age: <input class="age-box" type="number" min="0" max="100" name="age" value="21"/>
+            </br>
+            Gender: <select class="gender" name="gender">
+              <option value="None" selected="selected">None</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="videoFrame">
+      <iframe name="videoFrame" hidden></iframe>
+      </br>
+      <button type="button" class="btn btn-default btn-lg" id="close" hidden>Close</button>
+    </div>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">
+            P<i class="fa fa-heart"></i>LPITATE
+          </a>
+        </div>
+        <div>
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">References</a></li> 
+            <li><a href="#">Contact</a></li> 
+            <li><a href="https://github.com/group-24/Palpitate"><i class="fa fa-github fa"></i> GitHub</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </body>
+</html>
