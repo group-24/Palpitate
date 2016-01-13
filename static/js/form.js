@@ -5,12 +5,15 @@ $(document).ready(function() {
   var medicalMode = false;
 
 	$(".medical-info").hide();
+  $('#close').hide();
+  $(".videoFrame").hide();
 
   $("#medical").click(function() {
   	if (!medicalMode) {
 	    $(".medical-info").fadeIn();
 	    $("#medical").html("Use Standard Mode");
       $('body').css('background-image', 'url(' + medicalModeImageURL + ')');
+      $("[name='gender']").val("male");
       medicalMode = true;
   	} else {
   		$(".medical-info").fadeOut();
@@ -31,13 +34,14 @@ $(document).ready(function() {
 
   $('input:submit').click(function() {
       $('#home').fadeOut();
+      $(".videoFrame").fadeIn();
       $("[name='videoFrame']").fadeIn();
       $('#close').fadeIn();
   });
 
-
   $('#close').click(function() {
     $("[name='videoFrame']").fadeOut();
+    $(".videoFrame").fadeOut();
     $('#close').fadeOut();
     $('#home').fadeIn();
   })
