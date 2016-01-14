@@ -6,12 +6,6 @@ app = Flask(__name__)
 
 video_file = sys.argv[1]
 
-ALLOWED_EXTENSIONS = set(['avi'])
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
 @app.route('/')
 def index():
     return render_template('homepage.html');
@@ -30,7 +24,7 @@ def upload():
         print "Medical use case: Age " + age + ", " + gender
 
     file = request.files['file']
-    if file and allowed_file(file.filename):
+    if file:
         filename = secure_filename(file.filename)
         file.save(os.path.join('/', filename))
 

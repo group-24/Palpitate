@@ -28,8 +28,8 @@
           <div class="medical-info">
             Age: <input class="age-box" type="number" min="0" max="100" name="age" value="21"/>
             </br>
-            Gender: <select class="gender" name="gender">
-              <option value="None" selected="selected">None</option>
+            Sex: <select class="gender" name="gender">
+              <option value="None" selected="selected">Other</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>
@@ -38,9 +38,11 @@
       </div>
     </div>
     <div class="videoFrame">
-      <iframe name="videoFrame" hidden></iframe>
+      <button type="button" class="btn btn-default btn-lg" id="close">
+        <i class="fa fa-times"></i>
+      </button>
       </br>
-      <button type="button" class="btn btn-default btn-lg" id="close" hidden>Close</button>
+      <iframe name="videoFrame" hidden></iframe>
     </div>
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
