@@ -86,7 +86,12 @@ class HeartRateImposer(object):
         (x, y, w, h) = face
 
         self.vhrg.add_sample(interesting_pixels)
-        heartrate_from_vhrg = round(self.vhrg.get_heartrate(), 1)
+
+        heartrate_from_vhrg = self.vhrg.get_heartrate()
+        if heartrate_from_vhrg is not None:
+            heartrate_from_vhrg = round(heartrate_from_vhrg, 1)
+        else:
+            heartrate_from_vhrg = "---"
 
         cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
         heartrate_text = round(heartrate, 1) if heartrate else '---'
